@@ -74,7 +74,7 @@ dependencies {
 
     // Dagger Hilt
     implementation("com.google.dagger:hilt-android:2.51.1")
-    kapt("com.google.dagger:hilt-compiler:2.40.5")
+    kapt("com.google.dagger:hilt-compiler:2.51.1")
 
     // Flow
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.1")
