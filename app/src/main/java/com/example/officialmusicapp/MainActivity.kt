@@ -19,8 +19,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.officialmusicapp.components.SearchHeader
 import com.example.officialmusicapp.ui.screens.LoginScreen
 import com.example.officialmusicapp.ui.screens.RegisterScreen
+import com.example.officialmusicapp.ui.screens.SongLibraryScreen
 import com.example.officialmusicapp.ui.screens.SplashScreen
 import com.example.officialmusicapp.ui.theme.OfficialMusicAppTheme
 import com.example.officialmusicapp.viewmodel.SongViewModel
@@ -52,7 +54,8 @@ class MainActivity : ComponentActivity() {
 
 //                    LoginScreen()
 
-                    RegisterScreen()
+//                    RegisterScreen()
+                    SongLibraryScreen(innerPadding)
                 }
             }
         }

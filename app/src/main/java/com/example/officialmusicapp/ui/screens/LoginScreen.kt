@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -139,27 +140,33 @@ fun LoginScreen() {
             Row(
                 modifier = Modifier.wrapContentSize()
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_login_google),
-                    contentDescription = "Icon Login Google",
-                    modifier = Modifier.size(50.dp)
-                )
+                IconButton(onClick = { /*TODO*/ }) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_login_google),
+                        contentDescription = "Icon Login Google",
+                        modifier = Modifier.size(50.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.width(60.dp))
 
-                Image(
-                    painter = painterResource(id = R.drawable.ic_login_apple),
-                    contentDescription = "Icon Login Apple",
-                    modifier = Modifier.size(50.dp)
-                )
+                IconButton(onClick = { /*TODO*/ }) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_login_apple),
+                        contentDescription = "Icon Login Apple",
+                        modifier = Modifier.size(50.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.width(60.dp))
 
-                Image(
-                    painter = painterResource(id = R.drawable.ic_login_facebook),
-                    contentDescription = "Icon Login Facebook",
-                    modifier = Modifier.size(50.dp)
-                )
+                IconButton(onClick = { /*TODO*/ }) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_login_facebook),
+                        contentDescription = "Icon Login Facebook",
+                        modifier = Modifier.size(50.dp)
+                    )
+                }
             }
         }
 
