@@ -90,25 +90,25 @@ fun SongLibraryScreen(
         )
         Spacer(modifier = Modifier.height(20.dp))
 
-        ItemPlaylist(imageId = R.drawable.img_1, namePlaylist = "Create playlist")
+        ItemPlaylist(imageId = R.drawable.ic_create_playlist, namePlaylist = "Create playlist")
         Spacer(modifier = Modifier.height(20.dp))
 
-        ItemPlaylist(imageId = R.drawable.img_1, namePlaylist = "Create playlist")
+        ItemPlaylist(imageId = R.drawable.ic_create_playlist, namePlaylist = "Create playlist")
         Spacer(modifier = Modifier.height(20.dp))
 
-        ItemPlaylist(imageId = R.drawable.img_1, namePlaylist = "Create playlist")
+        ItemPlaylist(imageId = R.drawable.ic_create_playlist, namePlaylist = "Create playlist")
         Spacer(modifier = Modifier.height(20.dp))
 
-        ItemPlaylist(imageId = R.drawable.img_1, namePlaylist = "Create playlist")
+        ItemPlaylist(imageId = R.drawable.ic_create_playlist, namePlaylist = "Create playlist")
         Spacer(modifier = Modifier.height(20.dp))
 
-        ItemPlaylist(imageId = R.drawable.img_1, namePlaylist = "Create playlist")
+        ItemPlaylist(imageId = R.drawable.ic_create_playlist, namePlaylist = "Create playlist")
         Spacer(modifier = Modifier.height(20.dp))
 
-        ItemPlaylist(imageId = R.drawable.img_1, namePlaylist = "Create playlist")
+        ItemPlaylist(imageId = R.drawable.ic_create_playlist, namePlaylist = "Create playlist")
         Spacer(modifier = Modifier.height(20.dp))
 
-        ItemPlaylist(imageId = R.drawable.img_1, namePlaylist = "Create playlist")
+        ItemPlaylist(imageId = R.drawable.ic_create_playlist, namePlaylist = "Create playlist")
 
     }
 }
