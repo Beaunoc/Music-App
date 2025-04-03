@@ -32,8 +32,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.officialmusicapp.R
-import com.example.officialmusicapp.components.ItemNoSong
-import com.example.officialmusicapp.components.ItemSong
+import com.example.officialmusicapp.ui.components.ItemNoSong
+import com.example.officialmusicapp.ui.components.ItemSong
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)

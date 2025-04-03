@@ -1,6 +1,7 @@
 package com.example.officialmusicapp.ui.screens
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +23,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -39,7 +41,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.officialmusicapp.R
+import com.example.officialmusicapp.ui.components.ItemSong
+import com.example.officialmusicapp.viewmodel.SongViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -155,9 +161,26 @@ fun DownloadedSongScreen() {
 
 
 @Composable
-fun TabSong() {
-    LazyColumn {
+fun TabSong(
+    viewModel: SongViewModel = hiltViewModel(),
+) {
+    val songs = viewModel.songs.collectAsState().value
 
+    Log.d("SongListScreen", "Songs in UI: $songs")
+
+    Text(text = "${songs.size}")
+
+    Column(
+        modifier = Modifier.padding(16.dp)
+    ) {
+        songs.forEach { song ->
+            ItemSong(
+                imageId = R.drawable.img_profile_default,
+                nameOfSong = song.title,
+                nameOfArtist = song.artist,
+                isFavorite = song.favorite == "true"
+            )
+        }
     }
 }
 

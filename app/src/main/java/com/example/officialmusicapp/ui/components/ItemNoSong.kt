@@ -1,4 +1,4 @@
-package com.example.officialmusicapp.components
+package com.example.officialmusicapp.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column

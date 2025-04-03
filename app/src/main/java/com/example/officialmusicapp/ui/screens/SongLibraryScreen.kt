@@ -17,10 +17,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.officialmusicapp.R
-import com.example.officialmusicapp.components.ItemLibrary
-import com.example.officialmusicapp.components.ItemPlaylist
-import com.example.officialmusicapp.components.ItemRecentlyPlayed
-import com.example.officialmusicapp.components.SearchHeader
+import com.example.officialmusicapp.ui.components.ItemLibrary
+import com.example.officialmusicapp.ui.components.ItemPlaylist
+import com.example.officialmusicapp.ui.components.ItemRecentlyPlayed
+import com.example.officialmusicapp.ui.components.SearchHeader
 
 @Composable
 fun SongLibraryScreen(

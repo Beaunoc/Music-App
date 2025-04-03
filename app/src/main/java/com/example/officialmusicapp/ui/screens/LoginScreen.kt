@@ -32,7 +32,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.officialmusicapp.R
-import com.example.officialmusicapp.components.GradientButton
+import com.example.officialmusicapp.ui.components.GradientButton
 
 @Composable
 fun LoginScreen() {
