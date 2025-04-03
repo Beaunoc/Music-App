@@ -23,6 +23,7 @@ import com.example.officialmusicapp.components.SearchHeader
 import com.example.officialmusicapp.ui.screens.DownloadedSongScreen
 import com.example.officialmusicapp.ui.screens.FavoriteSongScreen
 import com.example.officialmusicapp.ui.screens.LoginScreen
+import com.example.officialmusicapp.ui.screens.MusicPlayerScreen
 import com.example.officialmusicapp.ui.screens.RegisterScreen
 import com.example.officialmusicapp.ui.screens.SongLibraryScreen
 import com.example.officialmusicapp.ui.screens.SplashScreen
@@ -59,7 +60,8 @@ class MainActivity : ComponentActivity() {
 //                    RegisterScreen()
 //                    SongLibraryScreen(innerPadding)
 //                    FavoriteSongScreen()
-                    DownloadedSongScreen()
+//                    DownloadedSongScreen()
+                    MusicPlayerScreen()
                 }
             }
         }

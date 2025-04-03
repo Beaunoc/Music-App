@@ -1,6 +1,7 @@
 package com.example.officialmusicapp.ui.screens
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,6 +9,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,26 +23,37 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.officialmusicapp.R
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun DownloadedSongScreen() {
-    var selectedTabIndex by remember {
-        mutableStateOf(0)
-    }
+    val tabTitles = listOf("Songs", "Playlist", "Album")
+
+    val pagerState = rememberPagerState(
+        pageCount = { tabTitles.size }
+    )
+
+    val coroutineScope = rememberCoroutineScope()
+
 
     Scaffold(
         topBar = {
@@ -102,25 +116,92 @@ fun DownloadedSongScreen() {
                     Spacer(modifier = Modifier.height(10.dp))
 
                     TabRow(
-                        selectedTabIndex = selectedTabIndex,
+                        selectedTabIndex = pagerState.currentPage,
                     ) {
-                        Tab(selected = selectedTabIndex == 0,
-                            onClick = { selectedTabIndex = 0 }) {
-                            Text(text = "Songs", modifier = Modifier.padding(16.dp))
-                        }
+                        tabTitles.forEachIndexed { index, title ->
+                            Tab(
+                                selected = pagerState.currentPage == index,
+                                onClick = {
+                                    coroutineScope.launch {
+                                        pagerState.scrollToPage(index)
+                                    }
+                                },
 
-                        Tab(selected = selectedTabIndex == 1,
-                            onClick = { selectedTabIndex = 1 }) {
-                            Text(text = "Playlist", modifier = Modifier.padding(16.dp))
-                        }
-
-                        Tab(selected = selectedTabIndex == 2,
-                            onClick = { selectedTabIndex = 2 }) {
-                            Text(text = "Album", modifier = Modifier.padding(16.dp))
+                                ) {
+                                Text(
+                                    text = title,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (pagerState.currentPage == index) Color.Black else Color.Gray
+                                )
+                            }
                         }
                     }
+
+                    HorizontalPager(
+                        state = pagerState
+                    ) { page ->
+                        when (page) {
+                            0 -> TabSong()
+                            1 -> TabPlaylist()
+                            2 -> TabAlbum()
+                        }
+                    }
+
                 }
             }
         }
     )
+}
+
+
+@Composable
+fun TabSong() {
+    LazyColumn {
+
+    }
+}
+
+@Composable
+fun TabPlaylist() {
+    Text(text = "abc")
+}
+
+@Composable
+fun TabAlbum() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(text = "abcdef")
+        Spacer(modifier = Modifier.height(100.dp))
+        Text(text = "abcdef")
+        Text(text = "abcdef")
+
+        Text(text = "abcdef")
+        Spacer(modifier = Modifier.height(100.dp))
+        Text(text = "abcdef")
+        Text(text = "abcdef")
+
+
+        Text(text = "abcdef")
+        Spacer(modifier = Modifier.height(100.dp))
+        Text(text = "abcdef")
+        Text(text = "abcdef")
+
+
+        Text(text = "abcdef")
+        Spacer(modifier = Modifier.height(100.dp))
+        Text(text = "abcdef")
+        Text(text = "abcdef")
+
+
+        Text(text = "abcdef")
+        Spacer(modifier = Modifier.height(100.dp))
+        Text(text = "abcdef")
+        Text(text = "abcdef")
+
+
+    }
+
 }

@@ -78,4 +78,11 @@ dependencies {
 
     // Flow
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.1")
+
+    //Pager
+    implementation("com.google.accompanist:accompanist-pager:0.30.1")
+    implementation("com.google.accompanist:accompanist-pager-indicators:0.24.13-rc")
+
+    //Coil
+    implementation("io.coil-kt:coil-compose:2.5.0")
 }
