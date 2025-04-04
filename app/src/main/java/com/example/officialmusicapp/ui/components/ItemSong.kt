@@ -1,6 +1,7 @@
 package com.example.officialmusicapp.ui.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,21 +17,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
 import com.example.officialmusicapp.R
+import com.example.officialmusicapp.data.model.entities.Song
 
 @Composable
 fun ItemSong(
-    imageId: Int,
-    nameOfSong: String,
-    nameOfArtist: String,
-    isFavorite: Boolean
+    song: Song,
+    onclick: (Song) -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onclick(song) },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
-            painter = painterResource(id = imageId),
+            painter = rememberAsyncImagePainter(model = song.image),
             contentDescription = "Image Song",
             Modifier.size(height = 46.dp, width = 65.dp)
         )
@@ -39,11 +42,11 @@ fun ItemSong(
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = nameOfSong)
-            Text(text = nameOfArtist)
+            Text(text = song.title)
+            Text(text = song.artist)
         }
         Spacer(modifier = Modifier.weight(1f))
-        if (isFavorite) {
+        if (song.favorite.toBoolean()) {
             Image(
                 painter = painterResource(id = R.drawable.ic_favorite),
                 contentDescription = "Icon Favorite",

@@ -18,8 +18,17 @@ class SongViewModel @Inject constructor(
     private val _songs = MutableStateFlow<List<Song>>(emptyList())
     val songs: StateFlow<List<Song>> get() = _songs
 
+    private val _currentPlayingSong = MutableStateFlow<Song?>(null)
+    val currentPlayingSong: StateFlow<Song?> get() = _currentPlayingSong
+
     init {
         fetchSongs()
+    }
+
+    fun setCurrentPlayingSong(currentSong: Song){
+
+        Log.d("SongViewModelABC", "Setting current song: $currentSong")
+        _currentPlayingSong.value = currentSong
     }
 
     private fun fetchSongs() {

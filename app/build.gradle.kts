@@ -111,6 +111,8 @@ dependencies {
     // ViewPager2
     implementation("androidx.viewpager2:viewpager2:1.1.0")
 
-    //Exo Player
-    implementation("com.google.android.exoplayer:exoplayer:2.15.0")
+    //Exo
+    implementation ("androidx.media3:media3-exoplayer:1.6.0")
+    implementation ("androidx.media3:media3-ui:1.6.0")
+    implementation ("androidx.media3:media3-common:1.6.0")
 }

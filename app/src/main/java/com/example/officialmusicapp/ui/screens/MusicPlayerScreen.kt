@@ -1,6 +1,7 @@
 package com.example.officialmusicapp.ui.screens
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,11 +18,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,14 +37,24 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.officialmusicapp.R
 import com.example.officialmusicapp.ui.components.RotatingImageCard
+import com.example.officialmusicapp.viewmodel.SongViewModel
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "StateFlowValueCalledInComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MusicPlayerScreen() {
+fun MusicPlayerScreen(
+    navController: NavController,
+    viewModel: SongViewModel
+) {
+    val song by viewModel.currentPlayingSong.collectAsState(initial = null)
+
+    Log.d("MusicPlayerABC", "Current song: $song")
+
     var isPlaying by remember {
         mutableStateOf(false)
     }
@@ -54,7 +67,7 @@ fun MusicPlayerScreen() {
         modifier = Modifier.fillMaxSize()
     ) {
         Image(
-            painter = rememberAsyncImagePainter("https://i.ytimg.com/vi/Zv1aeqWPUv8/maxresdefault.jpg"),
+            painter = rememberAsyncImagePainter(viewModel.currentPlayingSong.value?.image),
             contentDescription = "Background Image",
             modifier = Modifier
                 .fillMaxSize()
@@ -71,7 +84,8 @@ fun MusicPlayerScreen() {
         ) {
 
             Row(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(horizontal = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -98,22 +112,148 @@ fun MusicPlayerScreen() {
 
 
             }
-            RotatingImageCard(isPlaying = isPlaying)
+
+            Spacer(modifier = Modifier.height(150.dp))
+
+            if (song != null) {
+                RotatingImageCard(
+                    imageUrl = song!!.image,
+                    isPlaying = isPlaying
+                )
+            }
+
+            Spacer(modifier = Modifier.height(100.dp))
+
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                IconButton(
+                    onClick = { /*TODO*/ },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        contentColor = Color.White
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_share),
+                        contentDescription = "Icon Share",
+                        modifier = Modifier.size(30.dp),
+                    )
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    if (song!=null){
+                        Text(text = song!!.title, color = Color.White)
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(text = song!!.artist, color = Color.White)
+                    }
+                    
+                }
+
+                IconButton(
+                    onClick = { /*TODO*/ },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        contentColor = Color.White
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_music_play_screen_heart),
+                        contentDescription = "Icon Heart",
+                        modifier = Modifier.size(30.dp),
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            Button(onClick = {
-                isPlaying = !isPlaying
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
 
-                if(isPlaying){
-                    rotationAngle %= 360f
+                IconButton(
+                    onClick = { /*TODO*/ },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        contentColor = Color.White
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_random_play),
+                        contentDescription = "Icon Shuffle",
+                        modifier = Modifier.size(36.dp),
+                    )
                 }
-            }) {
-                Text(text = "Click me")
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = { /*TODO*/ },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_back_song),
+                            contentDescription = "Icon Previous",
+                            modifier = Modifier.size(30.dp),
+                        )
+                    }
+
+                    IconButton(
+                        onClick = { /*TODO*/ },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = Color.White
+                        ),
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_pause),
+                            contentDescription = "Icon Share",
+                            modifier = Modifier.size(60.dp),
+                        )
+                    }
+
+                    IconButton(
+                        onClick = { /*TODO*/ },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_next_song),
+                            contentDescription = "Icon Share",
+                            modifier = Modifier.size(30.dp),
+                        )
+                    }
+                }
+
+                IconButton(
+                    onClick = { /*TODO*/ },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        contentColor = Color.White
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_repeat_play),
+                        contentDescription = "Icon Repeat",
+                        modifier = Modifier.size(30.dp),
+                    )
+                }
+
+
             }
 
         }
     }
-
 
 }

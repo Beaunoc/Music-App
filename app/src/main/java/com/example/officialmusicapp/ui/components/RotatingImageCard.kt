@@ -30,6 +30,7 @@ import coil.compose.rememberImagePainter
 
 @Composable
 fun RotatingImageCard(
+    imageUrl: String,
     isPlaying: Boolean,
 ) {
 
@@ -60,7 +61,7 @@ fun RotatingImageCard(
                 }
         ) {
             Image(
-                painter = rememberAsyncImagePainter("https://i.ytimg.com/vi/Zv1aeqWPUv8/maxresdefault.jpg"),
+                painter = rememberAsyncImagePainter(imageUrl),
                 contentDescription = "Image Song",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop

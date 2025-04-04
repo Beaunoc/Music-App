@@ -1,6 +1,7 @@
 package com.example.officialmusicapp.ui.screens
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,13 +37,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.example.officialmusicapp.R
+import com.example.officialmusicapp.service.MusicPlayerService
 import com.example.officialmusicapp.ui.components.ItemSong
 import com.example.officialmusicapp.viewmodel.SongViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -51,7 +55,10 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun DownloadedSongScreen() {
+fun DownloadedSongScreen(
+    navController: NavController,
+    viewModel: SongViewModel
+) {
     val tabTitles = listOf("Songs", "Playlist", "Album")
 
     val pagerState = rememberPagerState(
@@ -99,7 +106,7 @@ fun DownloadedSongScreen() {
             ) {
                 item {
                     Text(
-                        text = "Favorite Songs",
+                        text = "Downloaded Songs",
                         style = TextStyle(fontSize = 25.sp),
                         fontWeight = FontWeight.Bold
                     )
@@ -147,7 +154,7 @@ fun DownloadedSongScreen() {
                         state = pagerState
                     ) { page ->
                         when (page) {
-                            0 -> TabSong()
+                            0 -> TabSong(navController, viewModel)
                             1 -> TabPlaylist()
                             2 -> TabAlbum()
                         }
@@ -162,24 +169,29 @@ fun DownloadedSongScreen() {
 
 @Composable
 fun TabSong(
-    viewModel: SongViewModel = hiltViewModel(),
+    navController: NavController,
+    viewModel: SongViewModel,
 ) {
     val songs = viewModel.songs.collectAsState().value
 
-    Log.d("SongListScreen", "Songs in UI: $songs")
-
-    Text(text = "${songs.size}")
-
+    val context = LocalContext.current
     Column(
         modifier = Modifier.padding(16.dp)
     ) {
         songs.forEach { song ->
-            ItemSong(
-                imageId = R.drawable.img_profile_default,
-                nameOfSong = song.title,
-                nameOfArtist = song.artist,
-                isFavorite = song.favorite == "true"
-            )
+            ItemSong(song = song) { selectedSong ->
+                viewModel.setCurrentPlayingSong(selectedSong)
+                Log.d("test", viewModel.currentPlayingSong.value!!.image)
+                navController.navigate("music_player_screen")
+
+//                val intent = Intent(context, MusicPlayerService::class.java).apply {
+//                    putExtra("song", selectedSong)
+//                }
+//
+//                context.startService(intent)
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
