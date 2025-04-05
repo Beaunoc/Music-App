@@ -1,16 +1,14 @@
-package com.example.officialmusicapp.data.database
+package com.example.officialmusicapp.di
 
 import android.content.Context
 import androidx.room.Room
-import com.example.officialmusicapp.data.api.MusicApiService
+import com.example.officialmusicapp.data.database.MusicDatabase
 import com.example.officialmusicapp.data.model.daos.SongDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 @Module

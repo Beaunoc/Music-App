@@ -14,16 +14,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -35,9 +34,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.officialmusicapp.R
@@ -51,17 +50,32 @@ fun MusicPlayerScreen(
     navController: NavController,
     viewModel: SongViewModel
 ) {
-    val song by viewModel.currentPlayingSong.collectAsState(initial = null)
+    val context = LocalContext.current
+    val currentSong by viewModel.currentPlayingSong.collectAsState(initial = null)
+    val isPlaying by viewModel.isPlaying.collectAsState()
 
-    Log.d("MusicPlayerABC", "Current song: $song")
+    Log.d("MusicPlayerABC", "Current song: $currentSong")
 
-    var isPlaying by remember {
-        mutableStateOf(false)
-    }
+//    var isPlaying by remember {
+//        mutableStateOf(false)
+//    }
 
     var rotationAngle by remember {
         mutableFloatStateOf(0f)
     }
+
+//    LaunchedEffect(currentSong) {
+//        currentSong?.let {
+//            viewModel.setCurrentPlayingSong(it)
+//        }
+//    }
+
+    LaunchedEffect(currentSong) {
+        currentSong?.let {
+            viewModel.startMusicService(context, it)  // Bắt đầu service khi chọn bài hát mới
+        }
+    }
+
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -73,6 +87,12 @@ fun MusicPlayerScreen(
                 .fillMaxSize()
                 .graphicsLayer(alpha = 0.5f),
             contentScale = ContentScale.Crop
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.4f)) // Làm tối
         )
 
         Column(
@@ -89,7 +109,9 @@ fun MusicPlayerScreen(
                     .padding(horizontal = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                IconButton(onClick = { /*TODO*/ }) {
+                IconButton(onClick = {
+                    navController.navigate("downloaded_screen")
+                }) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_arrow_down),
                         contentDescription = "Back",
@@ -113,16 +135,16 @@ fun MusicPlayerScreen(
 
             }
 
-            Spacer(modifier = Modifier.height(150.dp))
+            Spacer(modifier = Modifier.height(50.dp))
 
-            if (song != null) {
+            if (currentSong != null) {
                 RotatingImageCard(
-                    imageUrl = song!!.image,
+                    imageUrl = currentSong!!.image,
                     isPlaying = isPlaying
                 )
             }
 
-            Spacer(modifier = Modifier.height(100.dp))
+            Spacer(modifier = Modifier.height(50.dp))
 
             Row(
                 Modifier
@@ -148,10 +170,10 @@ fun MusicPlayerScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(top = 8.dp)
                 ) {
-                    if (song!=null){
-                        Text(text = song!!.title, color = Color.White)
+                    if (currentSong!=null){
+                        Text(text = currentSong!!.title, color = Color.White)
                         Spacer(modifier = Modifier.height(10.dp))
-                        Text(text = song!!.artist, color = Color.White)
+                        Text(text = currentSong!!.artist, color = Color.White)
                     }
                     
                 }
@@ -196,44 +218,20 @@ fun MusicPlayerScreen(
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
-                        onClick = { /*TODO*/ },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_back_song),
-                            contentDescription = "Icon Previous",
-                            modifier = Modifier.size(30.dp),
-                        )
+                    IconButton(onClick = { viewModel.playPreviousSong(context) }) {
+                        Icon(painter = painterResource(R.drawable.ic_back_song), contentDescription = "Back")
                     }
 
                     IconButton(
-                        onClick = { /*TODO*/ },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = Color.White
-                        ),
+                        onClick = { viewModel.togglePlayPause() },
                         modifier = Modifier.padding(horizontal = 20.dp)
                     ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_pause),
-                            contentDescription = "Icon Share",
-                            modifier = Modifier.size(60.dp),
-                        )
+                        val icon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
+                        Icon(painter = painterResource(icon), contentDescription = "Play/Pause")
                     }
 
-                    IconButton(
-                        onClick = { /*TODO*/ },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_next_song),
-                            contentDescription = "Icon Share",
-                            modifier = Modifier.size(30.dp),
-                        )
+                    IconButton(onClick = { viewModel.playNextSong(context) }) {
+                        Icon(painter = painterResource(R.drawable.ic_next_song), contentDescription = "Next")
                     }
                 }
 
@@ -252,6 +250,15 @@ fun MusicPlayerScreen(
 
 
             }
+
+            val currentPosition by viewModel.currentPosition.collectAsState()
+            val songDuration = currentSong?.duration ?: 0L
+            Slider(
+                value = currentPosition.toFloat(),
+                onValueChange = {},
+                valueRange = 0f..songDuration.toFloat(),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
 
         }
     }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
@@ -41,7 +42,7 @@ fun RotatingImageCard(
         targetValue = if (isPlaying) 360f else 0f,
         animationSpec = infiniteRepeatable(
             animation = keyframes {
-                durationMillis = 10000
+                durationMillis = 15000
             }
         ), label = ""
     )
@@ -49,7 +50,10 @@ fun RotatingImageCard(
     // Box cho hình ảnh với hiệu ứng bóng
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.size(300.dp).background(Color.Transparent)
+        modifier = Modifier
+            .size(300.dp)
+            .background(Color.Transparent)
+            .padding(25.dp)
     ) {
         Card(
             shape = CircleShape,

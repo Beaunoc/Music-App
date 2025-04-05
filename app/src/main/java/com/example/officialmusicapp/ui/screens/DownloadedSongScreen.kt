@@ -24,6 +24,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -175,20 +176,17 @@ fun TabSong(
     val songs = viewModel.songs.collectAsState().value
 
     val context = LocalContext.current
+
     Column(
         modifier = Modifier.padding(16.dp)
     ) {
         songs.forEach { song ->
             ItemSong(song = song) { selectedSong ->
-                viewModel.setCurrentPlayingSong(selectedSong)
+                viewModel.startMusicService(context, selectedSong)
+
                 Log.d("test", viewModel.currentPlayingSong.value!!.image)
                 navController.navigate("music_player_screen")
 
-//                val intent = Intent(context, MusicPlayerService::class.java).apply {
-//                    putExtra("song", selectedSong)
-//                }
-//
-//                context.startService(intent)
             }
 
             Spacer(modifier = Modifier.height(20.dp))
