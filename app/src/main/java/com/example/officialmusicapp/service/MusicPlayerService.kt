@@ -3,7 +3,9 @@ package com.example.officialmusicapp.service
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -11,6 +13,9 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.example.officialmusicapp.R
 
 class MusicPlayerService : Service() {
+    private lateinit var handler: Handler
+    private lateinit var updateRunnable: Runnable
+
     companion object {
         var exoPlayer: ExoPlayer? = null
     }
@@ -20,21 +25,6 @@ class MusicPlayerService : Service() {
         if (exoPlayer == null) {
             exoPlayer = ExoPlayer.Builder(this).build()
         }
-
-        exoPlayer?.addListener(object : Player.Listener {
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                super.onPlaybackStateChanged(playbackState)
-                if (exoPlayer?.isPlaying == true) {
-                    sendCurrentPositionToUI()
-                }
-            }
-        })
-    }
-
-    private fun sendCurrentPositionToUI() {
-        val intent = Intent("com.example.officialmusicapp.ACTION_UPDATE_POSITION")
-        intent.putExtra("currentPosition", exoPlayer?.currentPosition ?: 0L)
-        sendBroadcast(intent)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

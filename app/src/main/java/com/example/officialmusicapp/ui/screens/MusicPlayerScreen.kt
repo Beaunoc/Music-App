@@ -3,13 +3,10 @@
 package com.example.officialmusicapp.ui.screens
 
 import android.annotation.SuppressLint
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.os.Build
-import android.os.Handler
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,14 +19,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -50,7 +46,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.officialmusicapp.R
-import com.example.officialmusicapp.service.MusicPlayerService
 import com.example.officialmusicapp.ui.components.RotatingImageCard
 import com.example.officialmusicapp.utils.FormatDuration
 import com.example.officialmusicapp.viewmodel.SongViewModel
@@ -60,45 +55,34 @@ import com.example.officialmusicapp.viewmodel.SongViewModel
 @Composable
 fun MusicPlayerScreen(
     navController: NavController,
-    viewModel: SongViewModel
+    viewModel: SongViewModel,
 ) {
     val context = LocalContext.current
     val currentSong by viewModel.currentPlayingSong.collectAsState(initial = null)
     val isPlaying by viewModel.isPlaying.collectAsState()
 
     val currentPosition by viewModel.currentPosition.collectAsState()
-    val songDuration = currentSong?.duration ?: 0L
+    val songDuration = (currentSong?.duration?.toLong() ?: 1L) * 1000L
 
-    DisposableEffect(context) {
-        val filter = IntentFilter("com.example.officialmusicapp.ACTION_UPDATE_POSITION")
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                val position = intent?.getLongExtra("currentPosition", 0L) ?: 0L
-                viewModel.updateCurrentPosition(position)
-            }
-        }
+    var isSeeking by remember { mutableStateOf(false) }
+    var seekbarValue by remember { mutableFloatStateOf(0f) }
+    val progress = currentPosition.toFloat() / songDuration.toFloat()
 
-        // Đăng ký receiver
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        }
-
-        // Hủy đăng ký khi Composable không còn tồn tại
-        onDispose {
-            context.unregisterReceiver(receiver)
+    LaunchedEffect(currentPosition) {
+        if (!isSeeking) {
+            seekbarValue = progress
         }
     }
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = if (isSeeking) seekbarValue else progress,
+        animationSpec = tween(durationMillis = if (isSeeking) 0 else 300),
+        label = "animated_progress"
+    )
 
     LaunchedEffect(currentSong) {
         currentSong?.let {
             viewModel.startMusicService(context, it)
-//            viewModel.startPositionReceiver(context)
-        }
-    }
-
-    LaunchedEffect(currentPosition) {
-        if (MusicPlayerService.exoPlayer?.isPlaying == true) {
-            viewModel.updateCurrentPosition(MusicPlayerService.exoPlayer?.currentPosition ?: 0L)
         }
     }
 
@@ -219,10 +203,58 @@ fun MusicPlayerScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
+            Column(
+                modifier = Modifier
+                    .height(50.dp)
+            ) {
+                Slider(
+                    value = animatedProgress,
+                    onValueChange = { value ->
+                        isSeeking = true
+                        seekbarValue = value
+                    },
+                    onValueChangeFinished = {
+                        val seekToPosition = (seekbarValue * songDuration.toFloat()).toLong()
+                        viewModel.seekTo(seekToPosition)
+                        isSeeking = false
+                    },
+                    valueRange = 0f..1f,
+                    modifier = Modifier
+                        .padding(horizontal = 32.dp, vertical = 16.dp)
+                        .height(4.dp),
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color.White,
+                        activeTrackColor = Color.White,
+                        inactiveTrackColor = Color.Gray
+                    )
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    val displayedCurrentPosition = (animatedProgress * songDuration.toFloat()).toLong()
+                    Text(
+                        text = FormatDuration.formatDuration(displayedCurrentPosition),
+                        color = Color.White,
+                        style = TextStyle(fontSize = 12.sp)
+                    )
+                    Text(
+                        text = FormatDuration.formatDuration(songDuration.toLong()),
+                        color = Color.White,
+                        style = TextStyle(fontSize = 12.sp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    .padding(horizontal = 24.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -302,42 +334,6 @@ fun MusicPlayerScreen(
                 }
 
 
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 50.dp)
-            ) {
-                Slider(
-                    value = currentPosition.toFloat(),
-                    onValueChange = { value ->
-                        MusicPlayerService.exoPlayer?.seekTo(value.toLong())
-                    },
-                    valueRange = 0f..songDuration.toFloat(),
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .align(Alignment.BottomCenter)
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .align(Alignment.BottomCenter),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = FormatDuration.formatDuration(currentPosition),
-                        color = Color.White,
-                        style = TextStyle(fontSize = 12.sp)
-                    )
-                    Text(
-                        text = FormatDuration.formatDuration(songDuration.toLong()),
-                        color = Color.White,
-                        style = TextStyle(fontSize = 12.sp)
-                    )
-                }
             }
 
         }

@@ -12,6 +12,7 @@ import com.example.officialmusicapp.data.repository.SongRepository
 import com.example.officialmusicapp.service.MusicPlayerService
 import com.example.officialmusicapp.service.MusicPlayerService.Companion.exoPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -33,6 +34,8 @@ class SongViewModel @Inject constructor(
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> get() = _isPlaying
 
+    private var isTrackingPosition = false
+
     init {
         fetchSongs()
     }
@@ -43,20 +46,6 @@ class SongViewModel @Inject constructor(
         }
     }
 
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
-    fun startPositionReceiver(context: Context) {
-        val filter = IntentFilter("com.example.officialmusicapp.ACTION_UPDATE_POSITION")
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                val currentPosition = intent?.getLongExtra("currentPosition", 0L) ?: 0L
-                _currentPosition.value = currentPosition
-            }
-        }
-        viewModelScope.launch {
-            context.registerReceiver(receiver, filter)
-        }
-    }
-
     fun startMusicService(context: Context, song: Song) {
         _currentPlayingSong.value = song
         val intent = Intent(context, MusicPlayerService::class.java).apply {
@@ -64,6 +53,22 @@ class SongViewModel @Inject constructor(
         }
         context.startService(intent)
         _isPlaying.value = true
+        startTrackingPosition()
+    }
+
+    private fun startTrackingPosition() {
+        if (isTrackingPosition) return
+        isTrackingPosition = true
+        viewModelScope.launch {
+            while (true) {
+                delay(1000)
+                exoPlayer?.let {
+                    if (it.isPlaying) {
+                        _currentPosition.value = it.currentPosition
+                    }
+                }
+            }
+        }
     }
 
     fun togglePlayPause() {
@@ -100,7 +105,8 @@ class SongViewModel @Inject constructor(
         return if (currentIndex > 0) _songs.value[currentIndex - 1] else null
     }
 
-    fun updateCurrentPosition(newPosition: Long) {
-        _currentPosition.value = newPosition
+    fun seekTo(position: Long) {
+        exoPlayer?.seekTo(position)
+        _currentPosition.value = position
     }
 }
