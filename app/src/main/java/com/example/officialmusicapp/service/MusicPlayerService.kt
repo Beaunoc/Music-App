@@ -20,6 +20,21 @@ class MusicPlayerService : Service() {
         if (exoPlayer == null) {
             exoPlayer = ExoPlayer.Builder(this).build()
         }
+
+        exoPlayer?.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                super.onPlaybackStateChanged(playbackState)
+                if (exoPlayer?.isPlaying == true) {
+                    sendCurrentPositionToUI()
+                }
+            }
+        })
+    }
+
+    private fun sendCurrentPositionToUI() {
+        val intent = Intent("com.example.officialmusicapp.ACTION_UPDATE_POSITION")
+        intent.putExtra("currentPosition", exoPlayer?.currentPosition ?: 0L)
+        sendBroadcast(intent)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -62,4 +77,5 @@ class MusicPlayerService : Service() {
             .setSmallIcon(R.drawable.ic_zingmp3)
             .build()
     }
+
 }

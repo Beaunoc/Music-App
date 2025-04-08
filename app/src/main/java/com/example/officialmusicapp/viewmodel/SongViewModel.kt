@@ -1,7 +1,10 @@
 package com.example.officialmusicapp.viewmodel
 
+import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.officialmusicapp.data.model.entities.Song
@@ -37,6 +40,20 @@ class SongViewModel @Inject constructor(
     private fun fetchSongs() {
         viewModelScope.launch {
             _songs.value = songRepository.getAllSongs()
+        }
+    }
+
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+    fun startPositionReceiver(context: Context) {
+        val filter = IntentFilter("com.example.officialmusicapp.ACTION_UPDATE_POSITION")
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                val currentPosition = intent?.getLongExtra("currentPosition", 0L) ?: 0L
+                _currentPosition.value = currentPosition
+            }
+        }
+        viewModelScope.launch {
+            context.registerReceiver(receiver, filter)
         }
     }
 
@@ -81,5 +98,9 @@ class SongViewModel @Inject constructor(
     private fun getPreviousSong(): Song? {
         val currentIndex = _songs.value.indexOf(_currentPlayingSong.value)
         return if (currentIndex > 0) _songs.value[currentIndex - 1] else null
+    }
+
+    fun updateCurrentPosition(newPosition: Long) {
+        _currentPosition.value = newPosition
     }
 }

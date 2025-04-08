@@ -1,7 +1,15 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.officialmusicapp.ui.screens
 
 import android.annotation.SuppressLint
-import android.util.Log
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
+import android.os.Handler
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -36,15 +44,19 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.officialmusicapp.R
+import com.example.officialmusicapp.service.MusicPlayerService
 import com.example.officialmusicapp.ui.components.RotatingImageCard
+import com.example.officialmusicapp.utils.FormatDuration
 import com.example.officialmusicapp.viewmodel.SongViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "StateFlowValueCalledInComposition")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MusicPlayerScreen(
     navController: NavController,
@@ -54,28 +66,41 @@ fun MusicPlayerScreen(
     val currentSong by viewModel.currentPlayingSong.collectAsState(initial = null)
     val isPlaying by viewModel.isPlaying.collectAsState()
 
-    Log.d("MusicPlayerABC", "Current song: $currentSong")
+    val currentPosition by viewModel.currentPosition.collectAsState()
+    val songDuration = currentSong?.duration ?: 0L
 
-//    var isPlaying by remember {
-//        mutableStateOf(false)
-//    }
+    DisposableEffect(context) {
+        val filter = IntentFilter("com.example.officialmusicapp.ACTION_UPDATE_POSITION")
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                val position = intent?.getLongExtra("currentPosition", 0L) ?: 0L
+                viewModel.updateCurrentPosition(position)
+            }
+        }
 
-    var rotationAngle by remember {
-        mutableFloatStateOf(0f)
-    }
+        // Đăng ký receiver
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        }
 
-//    LaunchedEffect(currentSong) {
-//        currentSong?.let {
-//            viewModel.setCurrentPlayingSong(it)
-//        }
-//    }
-
-    LaunchedEffect(currentSong) {
-        currentSong?.let {
-            viewModel.startMusicService(context, it)  // Bắt đầu service khi chọn bài hát mới
+        // Hủy đăng ký khi Composable không còn tồn tại
+        onDispose {
+            context.unregisterReceiver(receiver)
         }
     }
 
+    LaunchedEffect(currentSong) {
+        currentSong?.let {
+            viewModel.startMusicService(context, it)
+//            viewModel.startPositionReceiver(context)
+        }
+    }
+
+    LaunchedEffect(currentPosition) {
+        if (MusicPlayerService.exoPlayer?.isPlaying == true) {
+            viewModel.updateCurrentPosition(MusicPlayerService.exoPlayer?.currentPosition ?: 0L)
+        }
+    }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -162,7 +187,7 @@ fun MusicPlayerScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_share),
                         contentDescription = "Icon Share",
-                        modifier = Modifier.size(30.dp),
+                        modifier = Modifier.size(25.dp),
                     )
                 }
 
@@ -170,12 +195,12 @@ fun MusicPlayerScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(top = 8.dp)
                 ) {
-                    if (currentSong!=null){
+                    if (currentSong != null) {
                         Text(text = currentSong!!.title, color = Color.White)
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(text = currentSong!!.artist, color = Color.White)
                     }
-                    
+
                 }
 
                 IconButton(
@@ -187,7 +212,7 @@ fun MusicPlayerScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_music_play_screen_heart),
                         contentDescription = "Icon Heart",
-                        modifier = Modifier.size(30.dp),
+                        modifier = Modifier.size(25.dp),
                     )
                 }
             }
@@ -199,7 +224,7 @@ fun MusicPlayerScreen(
                     .fillMaxWidth()
                     .padding(24.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.CenterVertically
             ) {
 
                 IconButton(
@@ -211,27 +236,55 @@ fun MusicPlayerScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_random_play),
                         contentDescription = "Icon Shuffle",
-                        modifier = Modifier.size(36.dp),
+                        modifier = Modifier.size(30.dp),
                     )
                 }
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = { viewModel.playPreviousSong(context) }) {
-                        Icon(painter = painterResource(R.drawable.ic_back_song), contentDescription = "Back")
+                    IconButton(
+                        onClick = { viewModel.playPreviousSong(context) },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_back_song),
+                            contentDescription = "Back",
+                            modifier = Modifier.size(30.dp),
+                        )
                     }
 
                     IconButton(
                         onClick = { viewModel.togglePlayPause() },
-                        modifier = Modifier.padding(horizontal = 20.dp)
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = Color.White
+                        ),
+                        modifier = Modifier
+                            .padding(horizontal = 20.dp)
+                            .size(60.dp)
+
                     ) {
                         val icon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
-                        Icon(painter = painterResource(icon), contentDescription = "Play/Pause")
+                        Icon(
+                            painter = painterResource(icon),
+                            contentDescription = "Play/Pause",
+                            modifier = Modifier.size(60.dp),
+                        )
                     }
 
-                    IconButton(onClick = { viewModel.playNextSong(context) }) {
-                        Icon(painter = painterResource(R.drawable.ic_next_song), contentDescription = "Next")
+                    IconButton(
+                        onClick = { viewModel.playNextSong(context) },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_next_song),
+                            contentDescription = "Next",
+                            modifier = Modifier.size(30.dp)
+                        )
                     }
                 }
 
@@ -244,21 +297,48 @@ fun MusicPlayerScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_repeat_play),
                         contentDescription = "Icon Repeat",
-                        modifier = Modifier.size(30.dp),
+                        modifier = Modifier.size(35.dp),
                     )
                 }
 
 
             }
 
-            val currentPosition by viewModel.currentPosition.collectAsState()
-            val songDuration = currentSong?.duration ?: 0L
-            Slider(
-                value = currentPosition.toFloat(),
-                onValueChange = {},
-                valueRange = 0f..songDuration.toFloat(),
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 50.dp)
+            ) {
+                Slider(
+                    value = currentPosition.toFloat(),
+                    onValueChange = { value ->
+                        MusicPlayerService.exoPlayer?.seekTo(value.toLong())
+                    },
+                    valueRange = 0f..songDuration.toFloat(),
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .align(Alignment.BottomCenter)
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .align(Alignment.BottomCenter),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = FormatDuration.formatDuration(currentPosition),
+                        color = Color.White,
+                        style = TextStyle(fontSize = 12.sp)
+                    )
+                    Text(
+                        text = FormatDuration.formatDuration(songDuration.toLong()),
+                        color = Color.White,
+                        style = TextStyle(fontSize = 12.sp)
+                    )
+                }
+            }
 
         }
     }
