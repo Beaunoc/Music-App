@@ -1,4 +1,12 @@
 package com.example.officialmusicapp.ui.screens
 
-class SearchScreen {
+import androidx.compose.runtime.Composable
+import androidx.navigation.NavController
+import com.example.officialmusicapp.viewmodel.SongViewModel
+
+@Composable
+fun SearchScreen(
+    navController: NavController,
+    viewModel: SongViewModel
+) {
 }

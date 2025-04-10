@@ -31,14 +31,19 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.officialmusicapp.R
 import com.example.officialmusicapp.ui.components.ItemNoSong
 import com.example.officialmusicapp.ui.components.ItemSong
+import com.example.officialmusicapp.viewmodel.SongViewModel
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavoriteSongScreen() {
+fun FavoriteSongScreen(
+    navController: NavController,
+    viewModel: SongViewModel
+) {
 
     val songList = listOf<String>(
         "Gương Mặt Lạ Lẫm",

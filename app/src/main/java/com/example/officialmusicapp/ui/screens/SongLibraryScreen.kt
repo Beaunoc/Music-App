@@ -16,14 +16,18 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.officialmusicapp.R
 import com.example.officialmusicapp.ui.components.ItemLibrary
 import com.example.officialmusicapp.ui.components.ItemPlaylist
 import com.example.officialmusicapp.ui.components.ItemRecentlyPlayed
 import com.example.officialmusicapp.ui.components.SearchHeader
+import com.example.officialmusicapp.viewmodel.SongViewModel
 
 @Composable
 fun SongLibraryScreen(
+    navController: NavController,
+    viewModel: SongViewModel,
     paddingValues: PaddingValues
 ) {
     val columnScrollState = rememberScrollState()
@@ -32,11 +36,13 @@ fun SongLibraryScreen(
 
     Column(
         modifier = Modifier
-            .padding(paddingValues)
             .padding(horizontal = 30.dp)
             .verticalScroll(columnScrollState)
     ) {
-        SearchHeader(profileImage = R.drawable.img_profile_default)
+        SearchHeader(
+            navController,
+            profileImage = R.drawable.img_profile_default
+        )
         Spacer(modifier = Modifier.height(20.dp))
         Text(
             text = "Library",
@@ -48,11 +54,32 @@ fun SongLibraryScreen(
             modifier = Modifier
                 .horizontalScroll(rowLibraryScrollState)
         ) {
-            ItemLibrary(imageIcon = R.drawable.ic_card_library_heart, text = "Favorite Songs", 0)
+            ItemLibrary(
+                imageIcon = R.drawable.ic_card_library_heart,
+                text = "Favorite Songs",
+                numberOfItems = 0,
+                onItemClick = {
+                    navController.navigate("favorite_screen")
+                }
+            )
 
-            ItemLibrary(imageIcon = R.drawable.ic_card_library_download, text = "Downloaded", 0)
+            ItemLibrary(
+                imageIcon = R.drawable.ic_card_library_download,
+                text = "Downloaded",
+                numberOfItems = 0,
+                onItemClick = {
+                    navController.navigate("download_screen")
+                }
+            )
 
-            ItemLibrary(imageIcon = R.drawable.ic_card_library_artist, text = "Artists", 0)
+            ItemLibrary(
+                imageIcon = R.drawable.ic_card_library_artist,
+                text = "Artists",
+                numberOfItems = 0,
+                onItemClick = {
+                    navController.navigate("artist_screen")
+                }
+            )
         }
         Spacer(modifier = Modifier.height(40.dp))
 

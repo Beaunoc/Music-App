@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.example.officialmusicapp.R
@@ -33,19 +34,31 @@ fun ItemSong(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
-            painter = rememberAsyncImagePainter(model = song.image),
+            painter = rememberAsyncImagePainter(
+                model = song.image,
+                placeholder = painterResource(id = R.drawable.img_recently_played_song)
+            ),
             contentDescription = "Image Song",
             Modifier.size(height = 46.dp, width = 65.dp)
         )
         Spacer(modifier = Modifier.width(10.dp))
         Column(
             horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.weight(1f)
         ) {
-            Text(text = song.title)
-            Text(text = song.artist)
+            Text(
+                text = song.title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = song.artist,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.width(20.dp))
         if (song.favorite.toBoolean()) {
             Image(
                 painter = painterResource(id = R.drawable.ic_favorite),

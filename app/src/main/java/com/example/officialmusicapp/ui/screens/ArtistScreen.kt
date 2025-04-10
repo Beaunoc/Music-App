@@ -5,7 +5,7 @@ import androidx.navigation.NavController
 import com.example.officialmusicapp.viewmodel.SongViewModel
 
 @Composable
-fun NotificationScreen(
+fun ArtistScreen(
     navController: NavController,
     viewModel: SongViewModel
 ) {

@@ -18,7 +18,6 @@ data class Song(
     val counter: Int,
     val replay: Int,
 ): Parcelable {
-    // Constructor để đọc từ Parcel
     constructor(parcel: Parcel) : this(
         id = parcel.readString() ?: "",
         title = parcel.readString() ?: "",
@@ -32,7 +31,6 @@ data class Song(
         replay = parcel.readInt()
     )
 
-    // Ghi đối tượng vào Parcel
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(id)
         parcel.writeString(title)

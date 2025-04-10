@@ -1,6 +1,7 @@
 package com.example.officialmusicapp.ui.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,12 +23,16 @@ import androidx.compose.ui.unit.dp
 fun ItemLibrary(
     imageIcon: Int,
     text: String,
-    numberOfItems: Int
+    numberOfItems: Int,
+    onItemClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .padding(end = 20.dp)
-            .size(160.dp),
+            .size(160.dp)
+            .clickable {
+                onItemClick()
+            },
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(6.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFFDE4E4)),

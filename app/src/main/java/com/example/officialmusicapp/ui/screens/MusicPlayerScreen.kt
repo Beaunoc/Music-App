@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -50,6 +52,7 @@ import com.example.officialmusicapp.ui.components.RotatingImageCard
 import com.example.officialmusicapp.utils.FormatDuration
 import com.example.officialmusicapp.viewmodel.SongViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "StateFlowValueCalledInComposition")
 @Composable
@@ -76,7 +79,7 @@ fun MusicPlayerScreen(
 
     val animatedProgress by animateFloatAsState(
         targetValue = if (isSeeking) seekbarValue else progress,
-        animationSpec = tween(durationMillis = if (isSeeking) 0 else 300),
+        animationSpec = tween(durationMillis = if (isSeeking) 0 else 1000),
         label = "animated_progress"
     )
 
@@ -101,7 +104,7 @@ fun MusicPlayerScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.4f)) // Làm tối
+                .background(Color.Black.copy(alpha = 0.4f))
         )
 
         Column(
@@ -138,10 +141,7 @@ fun MusicPlayerScreen(
                         contentDescription = "Icon More",
                         modifier = Modifier.size(30.dp)
                     )
-
                 }
-
-
             }
 
             Spacer(modifier = Modifier.height(50.dp))
@@ -221,12 +221,15 @@ fun MusicPlayerScreen(
                     valueRange = 0f..1f,
                     modifier = Modifier
                         .padding(horizontal = 32.dp, vertical = 16.dp)
-                        .height(4.dp),
+                        .height(1.dp),
                     colors = SliderDefaults.colors(
                         thumbColor = Color.White,
                         activeTrackColor = Color.White,
-                        inactiveTrackColor = Color.Gray
-                    )
+                        inactiveTrackColor = Color.Gray,
+                    ),
+                    thumb = {
+
+                    }
                 )
 
                 Row(
@@ -235,7 +238,8 @@ fun MusicPlayerScreen(
                         .padding(horizontal = 32.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    val displayedCurrentPosition = (animatedProgress * songDuration.toFloat()).toLong()
+                    val displayedCurrentPosition =
+                        (animatedProgress * songDuration.toFloat()).toLong()
                     Text(
                         text = FormatDuration.formatDuration(displayedCurrentPosition),
                         color = Color.White,

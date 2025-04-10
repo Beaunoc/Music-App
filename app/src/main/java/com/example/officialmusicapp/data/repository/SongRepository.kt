@@ -11,12 +11,22 @@ import javax.inject.Singleton
 class SongRepository @Inject constructor(
     private val songDao: SongDao,
 ) {
-    suspend fun fetchAndSaveSongs() {
-        val response = RetrofitInstance.api.fetchSongs()
+    private suspend fun isDataEmpty(): Boolean {
+        val songs = songDao.getAllSongs()
+        return songs.isEmpty()
+    }
 
-        val songs = response.songs
-        Log.d("SongRepository", "Fetched songs from API: $songs")
-        songDao.insertAllSongs(songs)
+    suspend fun fetchAndSaveSongs() {
+        if (isDataEmpty()){
+            val response = RetrofitInstance.api.fetchSongs()
+            val songs = response.songs
+            Log.d("SongRepository", "Fetched songs from API: $songs")
+            songDao.insertAllSongs(songs)
+        } else {
+            Log.d("SongRepository", "Using cached data from Room.")
+        }
+
+
     }
 
     suspend fun getAllSongs(): List<Song> {

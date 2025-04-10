@@ -42,7 +42,13 @@ class SongViewModel @Inject constructor(
 
     private fun fetchSongs() {
         viewModelScope.launch {
-            _songs.value = songRepository.getAllSongs()
+            songRepository.fetchAndSaveSongs()
+
+            val sortedSongs = songRepository.getAllSongs().sortedByDescending { song ->
+                song.counter
+            }
+
+            _songs.value = sortedSongs
         }
     }
 

@@ -31,11 +31,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.officialmusicapp.R
 import com.example.officialmusicapp.ui.components.GradientButton
+import com.example.officialmusicapp.viewmodel.SongViewModel
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(
+    navController: NavController,
+    viewModel: SongViewModel
+) {
     var username by remember {
         mutableStateOf("")
     }
