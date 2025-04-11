@@ -54,6 +54,11 @@ class SongViewModel @Inject constructor(
 
     fun startMusicService(context: Context, song: Song) {
         _currentPlayingSong.value = song
+        exoPlayer?.pause()
+        exoPlayer?.seekTo(0)
+        exoPlayer?.stop()
+        exoPlayer?.clearMediaItems()
+
         val intent = Intent(context, MusicPlayerService::class.java).apply {
             putExtra("SONG_URL", song.source)
         }

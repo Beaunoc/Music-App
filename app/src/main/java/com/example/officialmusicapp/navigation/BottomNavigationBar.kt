@@ -1,5 +1,6 @@
 package com.example.officialmusicapp.navigation
 
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
@@ -9,7 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.officialmusicapp.R
@@ -48,7 +52,8 @@ fun BottomNavigationBar(
     )
 
     BottomNavigation(
-        backgroundColor = Color.White
+        backgroundColor = Color.White,
+        modifier = Modifier.navigationBarsPadding()
     ) {
         val currentBackStackEntry = navController.currentBackStackEntryAsState()
         val currentRoute = currentBackStackEntry.value?.destination?.route
@@ -63,7 +68,13 @@ fun BottomNavigationBar(
                     )
                 },
                 label = {
-                    Text(text = item.title)
+                    Text(
+                        text = item.title,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        fontSize = 10.sp
+
+                    )
                 },
                 selected = currentRoute == item.route,
                 onClick = {

@@ -20,12 +20,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.Slider
+import androidx.compose.material.SliderDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,7 +52,6 @@ import com.example.officialmusicapp.ui.components.RotatingImageCard
 import com.example.officialmusicapp.utils.FormatDuration
 import com.example.officialmusicapp.viewmodel.SongViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "StateFlowValueCalledInComposition")
 @Composable
@@ -70,24 +69,36 @@ fun MusicPlayerScreen(
 
     var isSeeking by remember { mutableStateOf(false) }
     var seekbarValue by remember { mutableFloatStateOf(0f) }
-    val progress = currentPosition.toFloat() / songDuration.toFloat()
+    var justChangedSong by remember { mutableStateOf(false) }
+    val progress = if (justChangedSong) 0f else currentPosition.toFloat() / songDuration.toFloat()
+    var overrideProgress by remember { mutableStateOf<Float?>(null) }
 
-    LaunchedEffect(currentPosition) {
-        if (!isSeeking) {
-            seekbarValue = progress
+
+    LaunchedEffect(currentPosition, justChangedSong) {
+        if (!isSeeking && !justChangedSong) {
+            seekbarValue = currentPosition.toFloat() / songDuration.toFloat()
         }
     }
 
     val animatedProgress by animateFloatAsState(
-        targetValue = if (isSeeking) seekbarValue else progress,
-        animationSpec = tween(durationMillis = if (isSeeking) 0 else 1000),
+        targetValue = overrideProgress ?: if (isSeeking) seekbarValue else progress,
+        animationSpec = tween(durationMillis = if (isSeeking||justChangedSong) 0 else 1000),
         label = "animated_progress"
     )
 
     LaunchedEffect(currentSong) {
+        justChangedSong = true
+        seekbarValue = 0f
+        overrideProgress = 0f
+
+        kotlinx.coroutines.delay(50)
         currentSong?.let {
             viewModel.startMusicService(context, it)
         }
+
+        kotlinx.coroutines.delay(300)
+        overrideProgress = null
+        justChangedSong = false
     }
 
     Box(
@@ -225,18 +236,14 @@ fun MusicPlayerScreen(
                         .height(1.dp),
                     colors = SliderDefaults.colors(
                         thumbColor = Color.White,
-                        activeTrackColor = Color.White,
-                        inactiveTrackColor = Color.Gray,
-                    ),
-                    thumb = {
-
-                    }
+                        activeTrackColor = Color.White
+                    )
                 )
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 32.dp),
+                        .padding(horizontal = 36.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     val displayedCurrentPosition =
@@ -253,8 +260,6 @@ fun MusicPlayerScreen(
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(20.dp))
 
             Row(
                 Modifier
