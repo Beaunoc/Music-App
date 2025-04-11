@@ -36,7 +36,9 @@ fun SongLibraryScreen(
 
     Column(
         modifier = Modifier
+            .padding(paddingValues)
             .padding(horizontal = 30.dp)
+            .padding(bottom = 10.dp)
             .verticalScroll(columnScrollState)
     ) {
         SearchHeader(

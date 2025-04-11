@@ -1,12 +1,15 @@
 package com.example.officialmusicapp.navigation
 
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.officialmusicapp.R
@@ -44,7 +47,9 @@ fun BottomNavigationBar(
         )
     )
 
-    BottomNavigation {
+    BottomNavigation(
+        backgroundColor = Color.White
+    ) {
         val currentBackStackEntry = navController.currentBackStackEntryAsState()
         val currentRoute = currentBackStackEntry.value?.destination?.route
 
@@ -53,7 +58,8 @@ fun BottomNavigationBar(
                 icon = {
                     Icon(
                         painter = painterResource(id = item.icon),
-                        contentDescription = item.title
+                        contentDescription = item.title,
+                        modifier = Modifier.size(24.dp)
                     )
                 },
                 label = {
@@ -62,8 +68,8 @@ fun BottomNavigationBar(
                 selected = currentRoute == item.route,
                 onClick = {
                     if (currentRoute != item.route) {
-                        navController.navigate(item.route){
-                            popUpTo(navController.graph.startDestinationId){
+                        navController.navigate(item.route) {
+                            popUpTo(navController.graph.startDestinationId) {
                                 saveState = true
                             }
                             launchSingleTop = true

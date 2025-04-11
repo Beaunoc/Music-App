@@ -46,7 +46,9 @@ fun SearchHeader(
     ) {
         //Profile icon
         IconButton(
-            onClick = { /*TODO*/ },
+            onClick = {
+                navController.navigate("personal_profile_screen")
+            },
             Modifier.size(60.dp)
         ) {
             Image(
@@ -82,7 +84,9 @@ fun SearchHeader(
         )
 
         IconButton(
-            onClick = { /*TODO*/ },
+            onClick = {
+                navController.navigate("notification_screen")
+            },
             modifier = Modifier
                 .padding(start = 10.dp)
                 .size(24.dp)

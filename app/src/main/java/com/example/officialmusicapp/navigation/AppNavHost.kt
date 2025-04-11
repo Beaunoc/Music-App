@@ -3,10 +3,8 @@ package com.example.officialmusicapp.navigation
 import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -43,18 +41,19 @@ fun AppNavHost() {
         NavHost(
             navController = navController,
             startDestination = "zingchart_screen",
-            modifier = Modifier.padding(innerPadding)
         ) {
             composable("downloaded_screen") {
                 DownloadedSongScreen(
                     navController,
-                    songViewModel
+                    songViewModel,
+                    innerPadding
                 )
             }
             composable("music_player_screen") {
                 MusicPlayerScreen(
                     navController,
-                    songViewModel
+                    songViewModel,
+                    innerPadding
                 )
             }
             composable("library_screen") {
@@ -67,79 +66,92 @@ fun AppNavHost() {
             composable("discovery_screen") {
                 DiscoveryScreen(
                     navController,
-                    songViewModel
+                    songViewModel,
+                    innerPadding
                 )
             }
             composable("zingchart_screen") {
                 ZingChartScreen(
                     navController,
-                    songViewModel
+                    songViewModel,
+                    innerPadding
                 )
             }
             composable("radio_screen") {
                 RadioScreen(
                     navController,
-                    songViewModel
+                    songViewModel,
+                    innerPadding
                 )
             }
             composable("following_screen") {
                 FollowingScreen(
                     navController,
-                    songViewModel
+                    songViewModel,
+                    innerPadding
                 )
             }
             composable("download_screen") {
                 DownloadedSongScreen(
                     navController,
-                    songViewModel
+                    songViewModel,
+                    innerPadding
                 )
             }
             composable("favorite_screen") {
                 FavoriteSongScreen(
                     navController,
-                    songViewModel
+                    songViewModel,
+                    innerPadding
                 )
             }
             composable("login_screen") {
                 LoginScreen(
                     navController,
-                    songViewModel
+                    songViewModel,
+                    innerPadding
                 )
             }
             composable("register_screen") {
                 RegisterScreen(
                     navController,
-                    songViewModel
+                    songViewModel,
+                    innerPadding
                 )
             }
             composable("notification_screen") {
                 NotificationScreen(
                     navController,
-                    songViewModel
+                    songViewModel,
+                    innerPadding
                 )
             }
             composable("personal_profile_screen") {
                 PersonalProfileScreen(
                     navController,
-                    songViewModel
+                    songViewModel,
+                    innerPadding
                 )
             }
             composable("artist_screen") {
                 ArtistScreen(
                     navController,
-                    songViewModel
+                    songViewModel,
+                    innerPadding
                 )
             }
             composable("search_screen") {
                 SearchScreen(
                     navController,
-                    songViewModel
+                    songViewModel,
+                    innerPadding
                 )
             }
             composable("setting_screen") {
                 SettingScreen(
                     navController,
-                    songViewModel
+                    songViewModel,
+                    innerPadding
                 )
             }
         }

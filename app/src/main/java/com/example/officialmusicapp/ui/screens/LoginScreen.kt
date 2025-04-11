@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,7 +40,8 @@ import com.example.officialmusicapp.viewmodel.SongViewModel
 @Composable
 fun LoginScreen(
     navController: NavController,
-    viewModel: SongViewModel
+    viewModel: SongViewModel,
+    innerPadding: PaddingValues
 ) {
     var username by remember {
         mutableStateOf("")

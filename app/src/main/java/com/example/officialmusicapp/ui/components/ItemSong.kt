@@ -36,7 +36,7 @@ fun ItemSong(
         Image(
             painter = rememberAsyncImagePainter(
                 model = song.image,
-                placeholder = painterResource(id = R.drawable.img_recently_played_song)
+                placeholder = painterResource(id = R.drawable.ic_default_song)
             ),
             contentDescription = "Image Song",
             Modifier.size(height = 46.dp, width = 65.dp)
