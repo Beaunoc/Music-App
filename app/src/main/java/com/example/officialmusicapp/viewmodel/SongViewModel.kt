@@ -54,13 +54,10 @@ class SongViewModel @Inject constructor(
 
     fun startMusicService(context: Context, song: Song) {
         _currentPlayingSong.value = song
-        exoPlayer?.pause()
-        exoPlayer?.seekTo(0)
-        exoPlayer?.stop()
-        exoPlayer?.clearMediaItems()
+        _currentPosition.value = 0L
 
         val intent = Intent(context, MusicPlayerService::class.java).apply {
-            putExtra("SONG_URL", song.source)
+            putExtra("SONG_URL", song)
         }
         context.startService(intent)
         _isPlaying.value = true
@@ -95,12 +92,14 @@ class SongViewModel @Inject constructor(
     }
 
     fun playNextSong(context: Context) {
+        _currentPosition.value = 0L
         getNextSong()?.let {
             startMusicService(context, it)
         }
     }
 
     fun playPreviousSong(context: Context) {
+        _currentPosition.value = 0L
         getPreviousSong()?.let {
             startMusicService(context, it)
         }

@@ -115,4 +115,7 @@ dependencies {
     implementation ("androidx.media3:media3-exoplayer:1.6.0")
     implementation ("androidx.media3:media3-ui:1.6.0")
     implementation ("androidx.media3:media3-common:1.6.0")
+
+    //Media Session
+    implementation("androidx.media:media:1.7.0")
 }

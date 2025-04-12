@@ -4,6 +4,7 @@ package com.example.officialmusicapp.ui.screens
 
 import android.annotation.SuppressLint
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -22,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Slider
 import androidx.compose.material.SliderDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -69,36 +69,32 @@ fun MusicPlayerScreen(
 
     var isSeeking by remember { mutableStateOf(false) }
     var seekbarValue by remember { mutableFloatStateOf(0f) }
-    var justChangedSong by remember { mutableStateOf(false) }
-    val progress = if (justChangedSong) 0f else currentPosition.toFloat() / songDuration.toFloat()
-    var overrideProgress by remember { mutableStateOf<Float?>(null) }
+    val progress = currentPosition.toFloat() / songDuration.toFloat()
+    val duration = if (isSeeking) seekbarValue else progress
 
 
-    LaunchedEffect(currentPosition, justChangedSong) {
-        if (!isSeeking && !justChangedSong) {
-            seekbarValue = currentPosition.toFloat() / songDuration.toFloat()
+    LaunchedEffect(currentPosition) {
+        if (!isSeeking) {
+            seekbarValue = progress
+        }
+
+        val tolerance = 1000L // Chênh lệch nhỏ, ví dụ 500ms
+        if (!isSeeking && (songDuration - currentPosition) <= tolerance) {
+            // Khi thời gian còn lại ít hơn hoặc bằng 500ms, chuyển bài
+            viewModel.playNextSong(context)
         }
     }
 
-    val animatedProgress by animateFloatAsState(
-        targetValue = overrideProgress ?: if (isSeeking) seekbarValue else progress,
-        animationSpec = tween(durationMillis = if (isSeeking||justChangedSong) 0 else 1000),
-        label = "animated_progress"
-    )
+//    val animatedProgress by animateFloatAsState(
+//        targetValue = if (isSeeking) seekbarValue else progress,
+//        animationSpec = tween(durationMillis = if (isSeeking) 0 else 1),
+//        label = "animated_progress"
+//    )
 
     LaunchedEffect(currentSong) {
-        justChangedSong = true
-        seekbarValue = 0f
-        overrideProgress = 0f
-
-        kotlinx.coroutines.delay(50)
         currentSong?.let {
             viewModel.startMusicService(context, it)
         }
-
-        kotlinx.coroutines.delay(300)
-        overrideProgress = null
-        justChangedSong = false
     }
 
     Box(
@@ -220,7 +216,7 @@ fun MusicPlayerScreen(
                     .height(50.dp)
             ) {
                 Slider(
-                    value = animatedProgress,
+                    value = duration,
                     onValueChange = { value ->
                         isSeeking = true
                         seekbarValue = value
@@ -246,8 +242,9 @@ fun MusicPlayerScreen(
                         .padding(horizontal = 36.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+
                     val displayedCurrentPosition =
-                        (animatedProgress * songDuration.toFloat()).toLong()
+                        (duration * songDuration.toFloat()).toLong()
                     Text(
                         text = FormatDuration.formatDuration(displayedCurrentPosition),
                         color = Color.White,
@@ -278,7 +275,7 @@ fun MusicPlayerScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_random_play),
                         contentDescription = "Icon Shuffle",
-                        modifier = Modifier.size(30.dp),
+                        modifier = Modifier.size(25.dp),
                     )
                 }
 
@@ -294,7 +291,7 @@ fun MusicPlayerScreen(
                         Icon(
                             painter = painterResource(R.drawable.ic_back_song),
                             contentDescription = "Back",
-                            modifier = Modifier.size(30.dp),
+                            modifier = Modifier.size(20.dp),
                         )
                     }
 
@@ -325,7 +322,7 @@ fun MusicPlayerScreen(
                         Icon(
                             painter = painterResource(R.drawable.ic_next_song),
                             contentDescription = "Next",
-                            modifier = Modifier.size(30.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
@@ -339,7 +336,7 @@ fun MusicPlayerScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_repeat_play),
                         contentDescription = "Icon Repeat",
-                        modifier = Modifier.size(35.dp),
+                        modifier = Modifier.size(25.dp),
                     )
                 }
 
