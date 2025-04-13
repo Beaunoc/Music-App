@@ -20,13 +20,10 @@ import coil.request.ImageRequest
 import coil.request.SuccessResult
 import com.example.officialmusicapp.R
 import com.example.officialmusicapp.data.model.entities.Song
-import com.example.officialmusicapp.viewmodel.SongViewModel
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @Suppress("DEPRECATION")
 class MusicPlayerService : Service() {
@@ -102,7 +99,7 @@ class MusicPlayerService : Service() {
 
         GlobalScope.launch(Dispatchers.Main) {
             val albumArt = getAlbumArtFromUrl(song.image)
-            startForeground(1, createNotification(albumArt))
+            startForeground(1, createNotification(song, albumArt))
         }
 
         return START_STICKY
@@ -118,7 +115,7 @@ class MusicPlayerService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    private fun createNotification(albumArt: Bitmap?): Notification {
+    private fun createNotification(song: Song, albumArt: Bitmap?): Notification {
         val channelId = "music_channel"
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -135,8 +132,8 @@ class MusicPlayerService : Service() {
         val previousPendingIntent = createPendingIntent("ACTION_PREVIOUS")
 
         return NotificationCompat.Builder(this, channelId)
-            .setContentTitle(songViewModel.currentPlayingSong.value?.title)
-            .setContentText(songViewModel.currentPlayingSong.value?.artist)
+            .setContentTitle(song.title)
+            .setContentText(song.artist)
             .setSmallIcon(R.drawable.ic_zingmp3)
             .setLargeIcon(albumArt)
             .addAction(R.drawable.ic_back_song, "Previous", previousPendingIntent)
@@ -155,7 +152,7 @@ class MusicPlayerService : Service() {
     private fun createPendingIntent(action: String): PendingIntent {
         val intent = Intent(this, MusicPlayerService::class.java)
         intent.action = action
-        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
     }
 
     private suspend fun getAlbumArtFromUrl(url: String?): Bitmap?{
