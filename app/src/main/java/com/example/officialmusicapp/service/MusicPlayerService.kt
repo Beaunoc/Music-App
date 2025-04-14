@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.IBinder
+import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationCompat
@@ -31,7 +32,9 @@ class MusicPlayerService : Service() {
     private var songList: List<Song> = listOf()
     private var currentIndex = 0
     private var currentSong: Song? = null
+    private var currentAlbumArt: Bitmap? = null
 
+    private var updateJob: Job? = null
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     override fun onCreate() {
@@ -46,6 +49,7 @@ class MusicPlayerService : Service() {
                     exoPlayer?.play()
                     updatePlaybackState(true)
                     updateNotification()
+                    startUpdatingProgress()
                 }
 
                 override fun onPause() {
@@ -91,6 +95,7 @@ class MusicPlayerService : Service() {
                 exoPlayer?.play()
                 updatePlaybackState(true)
                 updateNotification()
+                startUpdatingProgress()
                 sendBroadcast(Intent("com.example.officialmusicapp.PLAYBACK_STATE_CHANGED").apply {
                     putExtra("IS_PLAYING", true)
                 })
@@ -151,18 +156,19 @@ class MusicPlayerService : Service() {
         currentSong = song
 
         exoPlayer?.apply {
+            stop()
+            clearMediaItems()
             setMediaItem(MediaItem.fromUri(song.source))
             prepare()
             play()
         }
 
-        sendBroadcast(Intent("com.example.officialmusicapp.SONG_CHANGED").apply {
-            putExtra("NEW_SONG", song)
-        })
-
         serviceScope.launch {
-            val albumArt = getAlbumArtFromUrl(song.image)
-            val notification = createNotification(song, albumArt)
+            currentAlbumArt = getAlbumArtFromUrl(song.image)
+            setMediaMetadata(song)
+            val position = exoPlayer?.currentPosition?.toInt() ?: 0
+            val duration = (exoPlayer?.duration ?: 0L).toInt().takeIf { it > 0 } ?: 0
+            val notification = createNotification(song, currentAlbumArt, position, duration)
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             if (startInForeground) {
                 startForeground(1, notification)
@@ -170,20 +176,37 @@ class MusicPlayerService : Service() {
                 manager.notify(1, notification)
             }
         }
+
+        startUpdatingProgress()
+
+        sendBroadcast(Intent("com.example.officialmusicapp.SONG_CHANGED").apply {
+            putExtra("NEW_SONG", song)
+        })
+    }
+
+    private fun setMediaMetadata(song: Song) {
+        val durationMs = exoPlayer?.duration ?: 0L
+        val metadata = MediaMetadataCompat.Builder()
+            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, song.title)
+            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, song.artist)
+            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, durationMs)
+            .build()
+        mediaSession.setMetadata(metadata)
     }
 
     private fun updateNotification() {
         currentSong?.let { song ->
             serviceScope.launch {
-                val albumArt = getAlbumArtFromUrl(song.image)
-                val notification = createNotification(song, albumArt)
+                val position = exoPlayer?.currentPosition?.toInt() ?: 0
+                val duration = (exoPlayer?.duration ?: 0L).toInt().takeIf { it > 0 } ?: 0
+                val notification = createNotification(song, currentAlbumArt, position, duration)
                 val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 manager.notify(1, notification)
             }
         }
     }
 
-    private fun createNotification(song: Song, albumArt: Bitmap?): Notification {
+    private fun createNotification(song: Song, albumArt: Bitmap?, position: Int, duration: Int): Notification {
         val channelId = "music_channel"
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -211,10 +234,9 @@ class MusicPlayerService : Service() {
             .setOnlyAlertOnce(true)
             .setOngoing(isPlaying)
 
-        val duration = exoPlayer?.duration?.toInt()?.takeIf { it > 0 } ?: 0
-        val position = exoPlayer?.currentPosition?.toInt() ?: 0
-
-        if (duration > 0) builder.setProgress(duration, position, false)
+        if (duration > 0) {
+            builder.setProgress(duration, position, false)
+        }
 
         return builder.build()
     }
@@ -230,9 +252,29 @@ class MusicPlayerService : Service() {
         }
 
         val loader = ImageLoader(this)
-        val request = ImageRequest.Builder(this).data(url).build()
+        val request = ImageRequest.Builder(this)
+            .data(url)
+            .size(512)
+            .allowHardware(false)
+            .build()
         val result = loader.execute(request)
         return if (result is SuccessResult) result.drawable.toBitmap()
         else BitmapFactory.decodeResource(resources, R.drawable.ic_default_song)
+    }
+
+    private fun startUpdatingProgress() {
+        updateJob?.cancel()
+        updateJob = serviceScope.launch {
+            while (exoPlayer?.isPlaying == true) {
+                val position = exoPlayer?.currentPosition?.toInt() ?: 0
+                val duration = (exoPlayer?.duration ?: 0L).toInt().takeIf { it > 0 } ?: 0
+                val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                currentSong?.let { song ->
+                    val notification = createNotification(song, currentAlbumArt, position, duration)
+                    manager.notify(1, notification)
+                }
+                delay(1000)
+            }
+        }
     }
 }
