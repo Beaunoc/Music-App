@@ -15,24 +15,24 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import coil.ImageLoader
-import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import com.example.officialmusicapp.R
 import com.example.officialmusicapp.data.model.entities.Song
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 @Suppress("DEPRECATION")
 class MusicPlayerService : Service() {
-    private lateinit var mediaSession: MediaSessionCompat
-    private lateinit var playbackStateBuilder: PlaybackStateCompat.Builder
-
     companion object {
         var exoPlayer: ExoPlayer? = null
     }
+
+    private lateinit var mediaSession: MediaSessionCompat
+    private var songList: List<Song> = listOf()
+    private var currentIndex = 0
+    private var currentSong: Song? = null
+
+    private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     override fun onCreate() {
         super.onCreate()
@@ -40,143 +40,199 @@ class MusicPlayerService : Service() {
             exoPlayer = ExoPlayer.Builder(this).build()
         }
 
-        mediaSession = MediaSessionCompat(this, "MusicPlayerService")
-        mediaSession.setCallback(object : MediaSessionCompat.Callback() {
-            override fun onPlay() {
-                super.onPlay()
-                exoPlayer?.play()
-            }
+        mediaSession = MediaSessionCompat(this, "MusicPlayerService").apply {
+            setCallback(object : MediaSessionCompat.Callback() {
+                override fun onPlay() {
+                    exoPlayer?.play()
+                    updatePlaybackState(true)
+                    updateNotification()
+                }
 
-            override fun onPause() {
-                super.onPause()
-                exoPlayer?.pause()
-            }
+                override fun onPause() {
+                    exoPlayer?.pause()
+                    updatePlaybackState(false)
+                    updateNotification()
+                }
 
-            override fun onSkipToNext() {
-                super.onSkipToNext()
-            }
+                override fun onSkipToNext() {
+                    playSongAt(currentIndex + 1)
+                }
 
-            override fun onPrepare() {
-                super.onPrepare()
-            }
+                override fun onSkipToPrevious() {
+                    playSongAt(currentIndex - 1)
+                }
 
-            override fun onSeekTo(pos: Long) {
-                super.onSeekTo(pos)
-                exoPlayer?.seekTo(pos)
-            }
-        })
-
-        playbackStateBuilder = PlaybackStateCompat.Builder()
-            .setActions(
-                PlaybackStateCompat.ACTION_PLAY or
-                PlaybackStateCompat.ACTION_PAUSE or
-                PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
-                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
-            )
-
-        mediaSession.setPlaybackState(playbackStateBuilder.build())
-        mediaSession.isActive = true
+                override fun onSeekTo(pos: Long) {
+                    exoPlayer?.seekTo(pos)
+                }
+            })
+            isActive = true
+        }
 
         exoPlayer?.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
-                super.onPlaybackStateChanged(state)
-                if (state == Player.STATE_ENDED) {
-                }
+                if (state == Player.STATE_ENDED) playSongAt(currentIndex + 1)
+                updateNotification()
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                updatePlaybackState(isPlaying)
+                updateNotification()
+                sendBroadcast(Intent("com.example.officialmusicapp.PLAYBACK_STATE_CHANGED").apply {
+                    putExtra("IS_PLAYING", isPlaying)
+                })
             }
         })
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val song = intent?.getParcelableExtra<Song>("SONG_URL") ?: return START_NOT_STICKY
-
-        val mediaItem = MediaItem.fromUri(song.source)
-        exoPlayer?.apply {
-            setMediaItem(mediaItem)
-            prepare()
-            play()
+        when (intent?.action) {
+            "ACTION_PLAY" -> {
+                exoPlayer?.play()
+                updatePlaybackState(true)
+                updateNotification()
+                sendBroadcast(Intent("com.example.officialmusicapp.PLAYBACK_STATE_CHANGED").apply {
+                    putExtra("IS_PLAYING", true)
+                })
+            }
+            "ACTION_PAUSE" -> {
+                exoPlayer?.pause()
+                updatePlaybackState(false)
+                updateNotification()
+                sendBroadcast(Intent("com.example.officialmusicapp.PLAYBACK_STATE_CHANGED").apply {
+                    putExtra("IS_PLAYING", false)
+                })
+            }
+            "ACTION_NEXT" -> playSongAt(currentIndex + 1)
+            "ACTION_PREVIOUS" -> playSongAt(currentIndex - 1)
+            else -> {
+                val song = intent?.getParcelableExtra<Song>("SONG_URL")
+                val songs = intent?.getParcelableArrayListExtra<Song>("SONG_LIST")
+                if (song != null && songs != null) {
+                    songList = songs
+                    currentIndex = songs.indexOfFirst { it.source == song.source }.takeIf { it >= 0 } ?: 0
+                    playSongAt(currentIndex, startInForeground = true)
+                }
+            }
         }
-
-        GlobalScope.launch(Dispatchers.Main) {
-            val albumArt = getAlbumArtFromUrl(song.image)
-            startForeground(1, createNotification(song, albumArt))
-        }
-
         return START_STICKY
     }
 
     override fun onDestroy() {
+        serviceScope.cancel()
         exoPlayer?.stop()
         exoPlayer?.release()
         exoPlayer = null
-        super.onDestroy()
         mediaSession.release()
+        super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    private fun updatePlaybackState(isPlaying: Boolean) {
+        val state = if (isPlaying) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED
+        mediaSession.setPlaybackState(
+            PlaybackStateCompat.Builder()
+                .setActions(
+                    PlaybackStateCompat.ACTION_PLAY or
+                            PlaybackStateCompat.ACTION_PAUSE or
+                            PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
+                            PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+                )
+                .setState(state, exoPlayer?.currentPosition ?: 0L, 1f)
+                .build()
+        )
+    }
+
+    private fun playSongAt(index: Int, startInForeground: Boolean = false) {
+        if (index !in songList.indices) return
+        currentIndex = index
+        val song = songList[index]
+        currentSong = song
+
+        exoPlayer?.apply {
+            setMediaItem(MediaItem.fromUri(song.source))
+            prepare()
+            play()
+        }
+
+        sendBroadcast(Intent("com.example.officialmusicapp.SONG_CHANGED").apply {
+            putExtra("NEW_SONG", song)
+        })
+
+        serviceScope.launch {
+            val albumArt = getAlbumArtFromUrl(song.image)
+            val notification = createNotification(song, albumArt)
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            if (startInForeground) {
+                startForeground(1, notification)
+            } else {
+                manager.notify(1, notification)
+            }
+        }
+    }
+
+    private fun updateNotification() {
+        currentSong?.let { song ->
+            serviceScope.launch {
+                val albumArt = getAlbumArtFromUrl(song.image)
+                val notification = createNotification(song, albumArt)
+                val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                manager.notify(1, notification)
+            }
+        }
+    }
 
     private fun createNotification(song: Song, albumArt: Bitmap?): Notification {
         val channelId = "music_channel"
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId, "Music Playback",
-                NotificationManager.IMPORTANCE_LOW
-            )
+            val channel = NotificationChannel(channelId, "Music Playback", NotificationManager.IMPORTANCE_LOW)
             manager.createNotificationChannel(channel)
         }
 
-        val playPendingIntent = createPendingIntent("ACTION_PLAY")
-        val pausePendingIntent = createPendingIntent("ACTION_PAUSE")
-        val nextPendingIntent = createPendingIntent("ACTION_NEXT")
-        val previousPendingIntent = createPendingIntent("ACTION_PREVIOUS")
+        val isPlaying = exoPlayer?.isPlaying == true
+        val playPauseIcon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
+        val playPauseAction = if (isPlaying) "ACTION_PAUSE" else "ACTION_PLAY"
 
-        return NotificationCompat.Builder(this, channelId)
+        val builder = NotificationCompat.Builder(this, channelId)
             .setContentTitle(song.title)
             .setContentText(song.artist)
             .setSmallIcon(R.drawable.ic_zingmp3)
             .setLargeIcon(albumArt)
-            .addAction(R.drawable.ic_back_song, "Previous", previousPendingIntent)
-            .addAction(R.drawable.ic_play, "Play", playPendingIntent)
-            .addAction(R.drawable.ic_pause, "Pause", pausePendingIntent)
-            .addAction(R.drawable.ic_next_song, "Next", nextPendingIntent)
+            .addAction(R.drawable.ic_back_song, "Previous", createPendingIntent("ACTION_PREVIOUS"))
+            .addAction(playPauseIcon, "PlayPause", createPendingIntent(playPauseAction))
+            .addAction(R.drawable.ic_next_song, "Next", createPendingIntent("ACTION_NEXT"))
             .setStyle(
                 MediaStyle()
                     .setMediaSession(mediaSession.sessionToken)
-                    .setShowActionsInCompactView(1,2,3,4)
+                    .setShowActionsInCompactView(0, 1, 2)
             )
-            .setProgress(100, 0, false)
-            .build()
+            .setOnlyAlertOnce(true)
+            .setOngoing(isPlaying)
+
+        val duration = exoPlayer?.duration?.toInt()?.takeIf { it > 0 } ?: 0
+        val position = exoPlayer?.currentPosition?.toInt() ?: 0
+
+        if (duration > 0) builder.setProgress(duration, position, false)
+
+        return builder.build()
     }
 
     private fun createPendingIntent(action: String): PendingIntent {
-        val intent = Intent(this, MusicPlayerService::class.java)
-        intent.action = action
-        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+        val intent = Intent(this, MusicPlayerService::class.java).apply { this.action = action }
+        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
 
-    private suspend fun getAlbumArtFromUrl(url: String?): Bitmap?{
+    private suspend fun getAlbumArtFromUrl(url: String?): Bitmap? {
         if (url.isNullOrEmpty()) {
             return BitmapFactory.decodeResource(resources, R.drawable.ic_default_song)
         }
 
-        val imageLoader = ImageLoader(this)
-
-        val request = ImageRequest.Builder(this)
-            .data(url)
-            .build()
-
-        return when (val response = imageLoader.execute(request)) {
-            is SuccessResult -> {
-                response.drawable.toBitmap()
-            }
-            is ErrorResult -> {
-                BitmapFactory.decodeResource(resources, R.drawable.ic_default_song)
-            }
-            else -> {
-                BitmapFactory.decodeResource(resources, R.drawable.ic_default_song)
-            }
-        }
+        val loader = ImageLoader(this)
+        val request = ImageRequest.Builder(this).data(url).build()
+        val result = loader.execute(request)
+        return if (result is SuccessResult) result.drawable.toBitmap()
+        else BitmapFactory.decodeResource(resources, R.drawable.ic_default_song)
     }
-
 }

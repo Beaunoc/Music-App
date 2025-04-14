@@ -2,12 +2,8 @@
 
 package com.example.officialmusicapp.ui.screens
 
-import android.annotation.SuppressLint
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +21,6 @@ import androidx.compose.material.Slider
 import androidx.compose.material.SliderDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,7 +37,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -53,7 +48,6 @@ import com.example.officialmusicapp.utils.FormatDuration
 import com.example.officialmusicapp.viewmodel.SongViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "StateFlowValueCalledInComposition")
 @Composable
 fun MusicPlayerScreen(
     navController: NavController,
@@ -61,35 +55,27 @@ fun MusicPlayerScreen(
     innerPadding: PaddingValues,
 ) {
     val context = LocalContext.current
-    val currentSong by viewModel.currentPlayingSong.collectAsState(initial = null)
-    val isPlaying by viewModel.isPlaying.collectAsState()
 
+    val currentSong by viewModel.currentPlayingSong.collectAsState()
+    val isPlaying by viewModel.isPlaying.collectAsState()
     val currentPosition by viewModel.currentPosition.collectAsState()
     val songDuration = (currentSong?.duration?.toLong() ?: 1L) * 1000L
 
     var isSeeking by remember { mutableStateOf(false) }
     var seekbarValue by remember { mutableFloatStateOf(0f) }
+
     val progress = currentPosition.toFloat() / songDuration.toFloat()
     val duration = if (isSeeking) seekbarValue else progress
 
+    LaunchedEffect(Unit) {
+        viewModel.registerBroadcasts(context)
+    }
 
     LaunchedEffect(currentPosition) {
         if (!isSeeking) {
             seekbarValue = progress
         }
-
-        val tolerance = 1000L // Chênh lệch nhỏ, ví dụ 500ms
-        if (!isSeeking && (songDuration - currentPosition) <= tolerance) {
-            // Khi thời gian còn lại ít hơn hoặc bằng 500ms, chuyển bài
-            viewModel.playNextSong(context)
-        }
     }
-
-//    val animatedProgress by animateFloatAsState(
-//        targetValue = if (isSeeking) seekbarValue else progress,
-//        animationSpec = tween(durationMillis = if (isSeeking) 0 else 1),
-//        label = "animated_progress"
-//    )
 
     LaunchedEffect(currentSong) {
         currentSong?.let {
@@ -97,11 +83,9 @@ fun MusicPlayerScreen(
         }
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Image(
-            painter = rememberAsyncImagePainter(viewModel.currentPlayingSong.value?.image),
+            painter = rememberAsyncImagePainter(currentSong?.image),
             contentDescription = "Background Image",
             modifier = Modifier
                 .fillMaxSize()
@@ -118,11 +102,9 @@ fun MusicPlayerScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 40.dp)
-                .background(Color.Transparent),
+                .padding(top = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -139,14 +121,10 @@ fun MusicPlayerScreen(
                     )
                 }
 
-                IconButton(
-                    onClick = { /*TODO*/ },
-                    modifier = Modifier.padding(end = 8.dp)
-
-                ) {
+                IconButton(onClick = { /* More options */ }) {
                     Icon(
                         painter = painterResource(id = R.drawable.icon_more),
-                        contentDescription = "Icon More",
+                        contentDescription = "More",
                         modifier = Modifier.size(30.dp)
                     )
                 }
@@ -154,81 +132,73 @@ fun MusicPlayerScreen(
 
             Spacer(modifier = Modifier.height(50.dp))
 
-            if (currentSong != null) {
-                RotatingImageCard(
-                    imageUrl = currentSong!!.image,
-                    isPlaying = isPlaying
-                )
+            currentSong?.image?.let { image ->
+                RotatingImageCard(imageUrl = image, isPlaying = isPlaying)
             }
 
             Spacer(modifier = Modifier.height(50.dp))
 
             Row(
-                Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                IconButton(
-                    onClick = { /*TODO*/ },
-                    colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = Color.White
-                    )
-                ) {
+                IconButton(onClick = { /* Share */ }) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_share),
-                        contentDescription = "Icon Share",
+                        contentDescription = "Share",
                         modifier = Modifier.size(25.dp),
+                        tint = Color.White
                     )
                 }
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.weight(1f)
+                        .padding(horizontal = 10.dp)
                 ) {
-                    if (currentSong != null) {
-                        Text(text = currentSong!!.title, color = Color.White)
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(text = currentSong!!.artist, color = Color.White)
-                    }
-
+                    Text(
+                        text = currentSong?.title ?: "",
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = currentSong?.artist ?: "", color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
-                IconButton(
-                    onClick = { /*TODO*/ },
-                    colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = Color.White
-                    )
-                ) {
+                IconButton(onClick = { /* Like */ }) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_music_play_screen_heart),
-                        contentDescription = "Icon Heart",
+                        contentDescription = "Heart",
                         modifier = Modifier.size(25.dp),
+                        tint = Color.White
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            Column(
-                modifier = Modifier
-                    .height(50.dp)
-            ) {
+            Column(modifier = Modifier.height(50.dp)) {
                 Slider(
                     value = duration,
-                    onValueChange = { value ->
+                    onValueChange = {
                         isSeeking = true
-                        seekbarValue = value
+                        seekbarValue = it
                     },
                     onValueChangeFinished = {
-                        val seekToPosition = (seekbarValue * songDuration.toFloat()).toLong()
-                        viewModel.seekTo(seekToPosition)
+                        val seekTo = (seekbarValue * songDuration.toFloat()).toLong()
+                        viewModel.seekTo(seekTo)
                         isSeeking = false
                     },
                     valueRange = 0f..1f,
                     modifier = Modifier
-                        .padding(horizontal = 32.dp, vertical = 16.dp)
+                        .padding(horizontal = 32.dp)
                         .height(1.dp),
                     colors = SliderDefaults.colors(
                         thumbColor = Color.White,
@@ -239,111 +209,90 @@ fun MusicPlayerScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 36.dp),
+                        .padding(horizontal = 36.dp)
+                        .padding(top = 10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-
-                    val displayedCurrentPosition =
-                        (duration * songDuration.toFloat()).toLong()
+                    val displayPos = (duration * songDuration).toLong()
                     Text(
-                        text = FormatDuration.formatDuration(displayedCurrentPosition),
-                        color = Color.White,
-                        style = TextStyle(fontSize = 12.sp)
+                        text = FormatDuration.formatDuration(displayPos),
+                        color = Color.White, fontSize = 12.sp
                     )
                     Text(
-                        text = FormatDuration.formatDuration(songDuration.toLong()),
-                        color = Color.White,
-                        style = TextStyle(fontSize = 12.sp)
+                        text = FormatDuration.formatDuration(songDuration),
+                        color = Color.White, fontSize = 12.sp
                     )
                 }
             }
 
             Row(
-                Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
-                IconButton(
-                    onClick = { /*TODO*/ },
-                    colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = Color.White
-                    )
-                ) {
+                IconButton(onClick = { /* Shuffle */ }) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_random_play),
-                        contentDescription = "Icon Shuffle",
+                        contentDescription = "Shuffle",
                         modifier = Modifier.size(25.dp),
+                        tint = Color.White
                     )
                 }
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
-                        onClick = { viewModel.playPreviousSong(context) },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = Color.White
-                        )
-                    ) {
+                    IconButton(onClick = {
+                        viewModel.playPreviousSong(context)
+                    }) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_back_song),
-                            contentDescription = "Back",
+                            painter = painterResource(id = R.drawable.ic_back_song),
+                            contentDescription = "Previous",
                             modifier = Modifier.size(20.dp),
+                            tint = Color.White
                         )
                     }
 
                     IconButton(
-                        onClick = { viewModel.togglePlayPause() },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = Color.White
-                        ),
+                        onClick = {
+                            viewModel.togglePlayPause(context)
+                        },
                         modifier = Modifier
                             .padding(horizontal = 20.dp)
                             .size(60.dp)
-
                     ) {
                         val icon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
                         Icon(
-                            painter = painterResource(icon),
-                            contentDescription = "Play/Pause",
+                            painter = painterResource(id = icon),
+                            contentDescription = "PlayPause",
                             modifier = Modifier.size(60.dp),
+                            tint = Color.White
                         )
                     }
 
-                    IconButton(
-                        onClick = { viewModel.playNextSong(context) },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = Color.White
-                        )
-                    ) {
+                    IconButton(onClick = {
+                        viewModel.playNextSong(context)
+                    }) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_next_song),
+                            painter = painterResource(id = R.drawable.ic_next_song),
                             contentDescription = "Next",
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(20.dp),
+                            tint = Color.White
                         )
                     }
                 }
 
-                IconButton(
-                    onClick = { /*TODO*/ },
-                    colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = Color.White
-                    )
-                ) {
+                IconButton(onClick = { /* Repeat */ }) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_repeat_play),
-                        contentDescription = "Icon Repeat",
+                        contentDescription = "Repeat",
                         modifier = Modifier.size(25.dp),
+                        tint = Color.White
                     )
                 }
-
-
             }
-
         }
     }
-
 }

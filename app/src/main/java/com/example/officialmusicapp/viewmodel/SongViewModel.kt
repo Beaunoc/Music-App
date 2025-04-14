@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.officialmusicapp.data.model.entities.Song
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@Suppress("DEPRECATION")
 @HiltViewModel
 class SongViewModel @Inject constructor(
     private val songRepository: SongRepository
@@ -43,12 +45,7 @@ class SongViewModel @Inject constructor(
     private fun fetchSongs() {
         viewModelScope.launch {
             songRepository.fetchAndSaveSongs()
-
-            val sortedSongs = songRepository.getAllSongs().sortedByDescending { song ->
-                song.counter
-            }
-
-            _songs.value = sortedSongs
+            _songs.value = songRepository.getAllSongs().sortedByDescending { it.counter }
         }
     }
 
@@ -58,8 +55,10 @@ class SongViewModel @Inject constructor(
 
         val intent = Intent(context, MusicPlayerService::class.java).apply {
             putExtra("SONG_URL", song)
+            putParcelableArrayListExtra("SONG_LIST", ArrayList(_songs.value))
         }
         context.startService(intent)
+
         _isPlaying.value = true
         startTrackingPosition()
     }
@@ -71,35 +70,35 @@ class SongViewModel @Inject constructor(
             while (true) {
                 delay(1000)
                 exoPlayer?.let {
-                    if (it.isPlaying) {
-                        _currentPosition.value = it.currentPosition
-                    }
+                    _currentPosition.value = it.currentPosition
                 }
             }
         }
     }
 
-    fun togglePlayPause() {
-        exoPlayer?.let {
-            if (it.isPlaying) {
-                it.pause()
-                _isPlaying.value = false
-            } else {
-                it.play()
-                _isPlaying.value = true
-            }
+    fun togglePlayPause(context: Context) {
+        var action =""
+        if (_isPlaying.value) {
+            action = "ACTION_PAUSE"
+            _isPlaying.value = false
+        } else {
+            action = "ACTION_PLAY"
+            _isPlaying.value = true
         }
+
+        val intent = Intent(context, MusicPlayerService::class.java).apply {
+            this.action = action
+        }
+        context.startService(intent)
     }
 
     fun playNextSong(context: Context) {
-        _currentPosition.value = 0L
         getNextSong()?.let {
             startMusicService(context, it)
         }
     }
 
     fun playPreviousSong(context: Context) {
-        _currentPosition.value = 0L
         getPreviousSong()?.let {
             startMusicService(context, it)
         }
@@ -118,5 +117,34 @@ class SongViewModel @Inject constructor(
     fun seekTo(position: Long) {
         exoPlayer?.seekTo(position)
         _currentPosition.value = position
+    }
+
+    fun registerBroadcasts(context: Context) {
+        val filter = IntentFilter().apply {
+            addAction("com.example.officialmusicapp.SONG_CHANGED")
+            addAction("com.example.officialmusicapp.PLAYBACK_STATE_CHANGED")
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    when (intent?.action) {
+                        "com.example.officialmusicapp.SONG_CHANGED" -> {
+                            val song = intent.getParcelableExtra<Song>("NEW_SONG")
+                            _currentPlayingSong.value = song
+                            _currentPosition.value = 0L
+                        }
+
+                        "com.example.officialmusicapp.PLAYBACK_STATE_CHANGED" -> {
+                            val isPlaying = intent.getBooleanExtra("IS_PLAYING", false)
+                            _isPlaying.value = isPlaying
+                        }
+                    }
+                }
+            }, filter, Context.RECEIVER_NOT_EXPORTED)
+        }
+    }
+
+    fun setCurrentPlayingSong(song: Song) {
+        _currentPlayingSong.value = song
     }
 }
