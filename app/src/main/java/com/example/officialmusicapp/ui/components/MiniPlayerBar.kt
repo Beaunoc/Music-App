@@ -40,7 +40,7 @@ fun MiniPlayerBar(
     onExpand: () -> Unit,
     onTogglePlay: () -> Unit,
     onNext: () -> Unit,
-    modifier: Modifier
+    modifier: Modifier,
 ) {
     Card(
         modifier = modifier
@@ -72,7 +72,7 @@ fun MiniPlayerBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Image(
                     painter = rememberAsyncImagePainter(model = currentSong.image),
@@ -94,27 +94,36 @@ fun MiniPlayerBar(
                     )
                     Text(
                         text = currentSong.artist,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         fontSize = 12.sp
                     )
                 }
-
-                IconButton(onClick = { /*TODO*/ }) {
+                IconButton(
+                    onClick = { /*TODO*/ },
+                    modifier = Modifier.padding(0.dp)
+                ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_music_play_screen_heart),
                         contentDescription = null,
-                        tint = Color.Black
+                        tint = Color.Black,
+                        modifier = Modifier.size(22.dp)
                     )
                 }
 
-                IconButton(onClick = { onTogglePlay() }) {
+                IconButton(onClick = { onTogglePlay() }, modifier = Modifier.padding(0.dp)) {
                     Icon(
                         painter = painterResource(id = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play),
                         contentDescription = null,
-                        tint = Color.Black
+                        tint = Color.Black,
+                        modifier = Modifier.size(30.dp)
                     )
                 }
 
-                IconButton(onClick = { onNext() }) {
+                IconButton(
+                    onClick = { onNext() },
+                    modifier = Modifier.padding(0.dp)
+                ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_next_song),
                         contentDescription = null,
@@ -123,7 +132,5 @@ fun MiniPlayerBar(
                 }
             }
         }
-
-
     }
 }

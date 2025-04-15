@@ -21,7 +21,7 @@ import javax.inject.Inject
 @Suppress("DEPRECATION")
 @HiltViewModel
 class SongViewModel @Inject constructor(
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
 ) : ViewModel() {
 
     private val _songs = MutableStateFlow<List<Song>>(emptyList())
@@ -35,6 +35,9 @@ class SongViewModel @Inject constructor(
 
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> get() = _isPlaying
+
+    private val _isShuffleEnabled = MutableStateFlow(false)
+    val isShuffleEnabled: StateFlow<Boolean> get() = _isShuffleEnabled
 
     private var isTrackingPosition = false
 
@@ -76,8 +79,16 @@ class SongViewModel @Inject constructor(
         }
     }
 
+    fun toggleShuffle(context: Context){
+        _isShuffleEnabled.value = !_isShuffleEnabled.value
+
+        val intent = Intent("com.example.officialmusicapp.SHUFFLE_CHANGED")
+        intent.putExtra("IS_SHUFFLE_ENABLED", _isShuffleEnabled.value)
+        context.sendBroadcast(intent)
+    }
+
     fun togglePlayPause(context: Context) {
-        var action =""
+        var action = ""
         if (_isPlaying.value) {
             action = "ACTION_PAUSE"
             _isPlaying.value = false
@@ -106,12 +117,20 @@ class SongViewModel @Inject constructor(
 
     private fun getNextSong(): Song? {
         val currentIndex = _songs.value.indexOf(_currentPlayingSong.value)
-        return _songs.value.getOrNull(currentIndex + 1)
+        return if (_isShuffleEnabled.value) {
+            _songs.value.randomOrNull()
+        } else {
+            _songs.value.getOrNull(currentIndex + 1) ?: _songs.value.getOrNull(0)
+        }
     }
 
     private fun getPreviousSong(): Song? {
         val currentIndex = _songs.value.indexOf(_currentPlayingSong.value)
-        return if (currentIndex > 0) _songs.value[currentIndex - 1] else null
+        return if (currentIndex > 0) {
+            _songs.value[currentIndex - 1]
+        } else {
+            _songs.value.getOrNull(_songs.value.size - 1)
+        }
     }
 
     fun seekTo(position: Long) {
@@ -142,9 +161,5 @@ class SongViewModel @Inject constructor(
                 }
             }, filter, Context.RECEIVER_NOT_EXPORTED)
         }
-    }
-
-    fun setCurrentPlayingSong(song: Song) {
-        _currentPlayingSong.value = song
     }
 }

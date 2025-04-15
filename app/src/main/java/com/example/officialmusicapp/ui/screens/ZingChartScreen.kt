@@ -103,6 +103,10 @@ fun ZingChartScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
             }
+
+            item {
+                Spacer(modifier = Modifier.height(60.dp))
+            }
         }
     }
 

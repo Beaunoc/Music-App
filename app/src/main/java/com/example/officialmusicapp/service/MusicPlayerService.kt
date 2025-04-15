@@ -1,14 +1,18 @@
 package com.example.officialmusicapp.service
 
 import android.app.*
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.Build
 import android.os.IBinder
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.media.app.NotificationCompat.MediaStyle
@@ -21,6 +25,7 @@ import coil.request.SuccessResult
 import com.example.officialmusicapp.R
 import com.example.officialmusicapp.data.model.entities.Song
 import kotlinx.coroutines.*
+import kotlin.random.Random
 
 @Suppress("DEPRECATION")
 class MusicPlayerService : Service() {
@@ -34,14 +39,20 @@ class MusicPlayerService : Service() {
     private var currentSong: Song? = null
     private var currentAlbumArt: Bitmap? = null
 
+    private var isShuffleEnabled = false
+
     private var updateJob: Job? = null
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate() {
         super.onCreate()
         if (exoPlayer == null) {
             exoPlayer = ExoPlayer.Builder(this).build()
         }
+
+        val filter = IntentFilter("com.example.officialmusicapp.SHUFFLE_CHANGED")
+        registerReceiver(shuffleReceiver, filter, RECEIVER_NOT_EXPORTED)
 
         mediaSession = MediaSessionCompat(this, "MusicPlayerService").apply {
             setCallback(object : MediaSessionCompat.Callback() {
@@ -59,6 +70,9 @@ class MusicPlayerService : Service() {
                 }
 
                 override fun onSkipToNext() {
+                    if (isShuffleEnabled){
+                        currentIndex = Random.nextInt(0, songList.size-1)
+                    }
                     playSongAt(currentIndex + 1)
                 }
 
@@ -75,7 +89,12 @@ class MusicPlayerService : Service() {
 
         exoPlayer?.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
-                if (state == Player.STATE_ENDED) playSongAt(currentIndex + 1)
+                if (state == Player.STATE_ENDED) {
+                    if (isShuffleEnabled){
+                        currentIndex = Random.nextInt(0, songList.size-1)
+                    }
+                    playSongAt(currentIndex)
+                }
                 updateNotification()
             }
 
@@ -87,6 +106,14 @@ class MusicPlayerService : Service() {
                 })
             }
         })
+    }
+
+    private val shuffleReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == "com.example.officialmusicapp.SHUFFLE_CHANGED"){
+                isShuffleEnabled = intent.getBooleanExtra("IS_SHUFFLE_ENABLED", false)
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -129,6 +156,7 @@ class MusicPlayerService : Service() {
         exoPlayer?.release()
         exoPlayer = null
         mediaSession.release()
+        unregisterReceiver(shuffleReceiver)
         super.onDestroy()
     }
 

@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.Slider
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.SliderDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -62,6 +64,7 @@ fun MusicPlayerScreen(
     val currentPosition by viewModel.currentPosition.collectAsState()
     val songDuration = (currentSong?.duration?.toLong() ?: 1L) * 1000L
 
+    val isShuffle by viewModel.isShuffleEnabled.collectAsState()
     var isSeeking by remember { mutableStateOf(false) }
     var seekbarValue by remember { mutableFloatStateOf(0f) }
 
@@ -149,7 +152,7 @@ fun MusicPlayerScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_share),
                         contentDescription = "Share",
-                        modifier = Modifier.size(25.dp),
+                        modifier = Modifier.size(24.dp),
                         tint = Color.White
                     )
                 }
@@ -178,7 +181,7 @@ fun MusicPlayerScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_music_play_screen_heart),
                         contentDescription = "Heart",
-                        modifier = Modifier.size(25.dp),
+                        modifier = Modifier.size(18.dp),
                         tint = Color.White
                     )
                 }
@@ -234,12 +237,18 @@ fun MusicPlayerScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { /* Shuffle */ }) {
+                IconButton(onClick = {
+                    viewModel.toggleShuffle(context)
+                }) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_random_play),
                         contentDescription = "Shuffle",
-                        modifier = Modifier.size(25.dp),
-                        tint = Color.White
+                        modifier = Modifier.size(20.dp),
+                        tint = if (isShuffle) {
+                            Color(0xFFA500D0)
+                        } else {
+                            Color.White
+                        }
                     )
                 }
 
@@ -252,7 +261,7 @@ fun MusicPlayerScreen(
                         Icon(
                             painter = painterResource(id = R.drawable.ic_back_song),
                             contentDescription = "Previous",
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(18.dp),
                             tint = Color.White
                         )
                     }
@@ -262,14 +271,14 @@ fun MusicPlayerScreen(
                             viewModel.togglePlayPause(context)
                         },
                         modifier = Modifier
-                            .padding(horizontal = 20.dp)
-                            .size(60.dp)
+                            .padding(horizontal = 10.dp)
+                            .size(68.dp)
                     ) {
                         val icon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
                         Icon(
                             painter = painterResource(id = icon),
                             contentDescription = "PlayPause",
-                            modifier = Modifier.size(60.dp),
+                            modifier = Modifier.fillMaxSize(),
                             tint = Color.White
                         )
                     }
@@ -280,7 +289,7 @@ fun MusicPlayerScreen(
                         Icon(
                             painter = painterResource(id = R.drawable.ic_next_song),
                             contentDescription = "Next",
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(18.dp),
                             tint = Color.White
                         )
                     }
