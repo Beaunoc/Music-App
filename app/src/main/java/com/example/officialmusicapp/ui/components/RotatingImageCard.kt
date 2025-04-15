@@ -14,7 +14,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,18 +33,25 @@ fun RotatingImageCard(
     imageUrl: String,
     isPlaying: Boolean,
 ) {
+    var angle by remember { mutableFloatStateOf(0f) }
 
     val infiniteTransition = rememberInfiniteTransition(label = "")
 
-    val angle by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = if (isPlaying) 360f else 0f,
+    val rotationAngle = infiniteTransition.animateFloat(
+        initialValue = angle,
+        targetValue = if (isPlaying) angle + 360f else angle,
         animationSpec = infiniteRepeatable(
             animation = keyframes {
-                durationMillis = 30000
+                durationMillis = 25000
             }
         ), label = ""
     )
+
+    LaunchedEffect(isPlaying) {
+        if (!isPlaying) {
+            angle = rotationAngle.value
+        }
+    }
 
     Box(
         contentAlignment = Alignment.Center,
@@ -54,7 +66,7 @@ fun RotatingImageCard(
             modifier = Modifier
                 .size(300.dp)
                 .graphicsLayer {
-                    rotationZ = angle
+                    rotationZ = rotationAngle.value
                 }
         ) {
             Image(

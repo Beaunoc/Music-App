@@ -53,6 +53,7 @@ fun MusicPlayerScreen(
     navController: NavController,
     viewModel: SongViewModel,
     innerPadding: PaddingValues,
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -78,8 +79,8 @@ fun MusicPlayerScreen(
     }
 
     LaunchedEffect(currentSong) {
-        currentSong?.let {
-            viewModel.startMusicService(context, it)
+        if (currentSong != viewModel.currentPlayingSong.value) {
+            viewModel.startMusicService(context, currentSong!!)
         }
     }
 
@@ -112,7 +113,7 @@ fun MusicPlayerScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 IconButton(onClick = {
-                    navController.navigate("downloaded_screen")
+                    onBack()
                 }) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_arrow_down),
@@ -155,7 +156,8 @@ fun MusicPlayerScreen(
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
                         .padding(horizontal = 10.dp)
                 ) {
                     Text(
